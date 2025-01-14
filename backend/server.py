@@ -5,6 +5,7 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, inspect, text
 import requests
+from github_intigration import get_repo_data
 from flask_mail import Mail, Message
 import random
 import os
@@ -152,6 +153,7 @@ class ProjectRegisterResource(Resource):
         descrp = request.json.get('project_descrp')
         id = request.json.get('id')
         pwd = request.json.get('pwd')
+        git = request.json.get('github')
         
         acc = AccountModel.query.filter_by(user_id = id).first()
         
@@ -177,7 +179,7 @@ class ProjectRegisterResource(Resource):
             results['Projects'].append(prj.project_id)
             mongo_account_data.update_one({"user_id": id}, {'$set': results})
             
-            data = {'_id':prj.project_id, 'Project_name':name, 'Project_descrp':descrp, 'Project_author':id, 'Skills':skills, 'Contributors':[], 'Features':{}, 'Messages':[]}
+            data = {'_id':prj.project_id, 'Project_name':name, 'Project_descrp':descrp, 'Project_author':id, 'Skills':skills, 'Contributors':[], 'Features':{}, 'Messages':[], 'Project_URL':git}
             mongo_project_data.insert_one(data)
             
             return jsonify({'message' : "Successfull", 'status' : 200})
@@ -215,7 +217,6 @@ class PostProjectMessage(Resource):
             mongo_project_data.update_one({'_id': project_id}, {'$set': project})
 
             return jsonify({'message': 'Message posted successfully', 'status': 200})
-
         
 class AddContributorResource(Resource):
     def post(self):
@@ -307,13 +308,25 @@ class ToggleFeatureStatus(Resource):
 class GetProjectByAuthor(Resource):
     def post(self):
         id = request.json.get('project_author')
+        print(id)
         project = list(mongo_project_data.find({'Project_author': id}))
-
+        print(project)
         if not project:
             return jsonify({'message': 'Project not found', 'status': 404})
 
         print(project)
         return jsonify({'projects': project, 'status': 200})
+    
+class GetProjectByID(Resource):
+    def post(self):
+        id = request.json.get('project_id')
+        project = mongo_project_data.find_one({'_id': id})
+
+        if not project:
+            return jsonify({'message': 'Project not found', 'status': 404})
+
+        print(project)
+        return jsonify({'features': project['Features'], 'status': 200})
     
 @app.route('/api/send_code', methods = ['GET'])
 def send_code():
@@ -392,15 +405,28 @@ def get_skills():
     except Exception as e:
         return jsonify({'message': str(e), 'status': 500})
     
-@app.route('/api/test', methods=['POST'])
+@app.route('/api/get_github', methods=['POST'])
 def add_user_data():
-    data = request.get_json()
+    id = request.json.get('project_id')
     try:
-        mongo_account_data.insert_one(data)
-        return jsonify({"message": "User data added successfully", "status": 200})
+        temp = mongo_project_data.find_one({'_id' : id})
+        if temp['Project_URL'] == None:
+            return jsonify({"message": "Github data does not exists", "status": 404})
+        result = get_repo_data(temp['Project_URL'])
+        return jsonify({"message": "Github data retrieved successfully", "status": 200, 'data' : result})
     except Exception as e:
         return jsonify({"message": str(e), "status": 500})
-
+    
+class AccountData(Resource):
+    def put(self):
+        id = request.json.get('user_id')
+        result = mongo_account_data.find_one({'user_id': id})
+        
+        if result:
+            return jsonify({"message": "Account data retrieved successfully", "status": 200, 'data' : result})
+        else:
+            return jsonify({"message": "Uccessfull", "status": 400})
+        
            
 api.add_resource(LoginResource, '/api/login')
 api.add_resource(RegisterResource, '/api/register')
@@ -411,6 +437,8 @@ api.add_resource(AddFeatureResource, '/api/add_feature') #post
 api.add_resource(ToggleFeatureStatus, '/api/toggle_feature')
 api.add_resource(GetProjectByAuthor, '/api/project')
 api.add_resource(PostProjectMessage, '/api/post_message')
+api.add_resource(AccountData, '/api/get_account')
+api.add_resource(GetProjectByID, '/api/get_features')
 
 if __name__ == "__main__":
     app.run(debug=True)
