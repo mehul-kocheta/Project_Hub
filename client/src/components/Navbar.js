@@ -22,7 +22,7 @@ function Navbar() {
           <div className="user-dropdown">
             <span className="dropdown-title">Account</span>
             <ul className="dropdown-menu">
-              <li><button variant="contained" onClick={() => navigate('/UserProfile')} >My Profile</button></li>
+              <li><button variant="contained" onClick={() => navigate('/profile')} >My Profile</button></li>
               <li><a href="#settings">Settings</a></li>
               {/* Logout button linking to Sign In page */}
               <li><Link to="/signin">Logout</Link></li>

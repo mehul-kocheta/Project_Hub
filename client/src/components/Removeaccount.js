@@ -21,7 +21,7 @@ const RemoveAccount = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('https://57f1-45-118-208-34.ngrok-free.app/api/rm_acc', formData);
+      const response = await axios.post('/api/rm_acc', formData);
       // console.log('Response:', response);  
       setMessage(response.data.message);
 

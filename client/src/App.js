@@ -65,7 +65,10 @@ import SignUp from './components/Signup';
 import NewProject from './components/Newproject';
 import RemoveAccount from './components/Removeaccount';
 import Projects from './components/Projects.js';
-import { GoogleOAuthProvider } from '@react-oauth/google';
+import UserProfile from './components/Profile.js';
+import MyProfile from './components/Myprofile.js';
+import EditProfile from './components/Editprofile.js';
+import Viewproject from './components/Viewproject.js';
 
 function App() {
   return (
@@ -82,6 +85,10 @@ function App() {
             <Route path="/signup" element={<SignUp />} />
             <Route path='/new-project' element={<NewProject/>}/>
             <Route path='/project' element={<Projects/>}/>
+            <Route path='/profile' element={<UserProfile/>}/>
+            <Route path='/viewproject' element={<Viewproject/>}/>
+            <Route path='/myprofile' element={<MyProfile/>}/>
+            <Route path='/editprofile' element={<EditProfile/>}/>
             <Route path='/removeaccount' element={<RemoveAccount/>}/>
           </Routes>
           {/* <GoogleOAuthProvider clientId="296708240295-sublesndur4s2ptp0bhi5s9ljtd9f79a.apps.googleusercontent.com"> Replace with your Google Client ID */}

@@ -1,14 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { TextField, Button, Typography, Box, Container, Chip, Autocomplete } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+
 
 const NewProject = () => {
+    const location = useLocation();
+    const id = location.state?.user;
+    const pwd = location.state?.pwd;
+    console.log(id);
+    console.log(pwd);
     const [projectData, setProjectData] = useState({
-        id: '',
-        pwd: '',
+        id: id,
+        pwd: pwd,
         project_name: '',
         project_descrp: '',
         skills: [],
+        github: '',
     });
 
     const [inputSkill, setInputSkill] = useState('');
@@ -16,7 +23,7 @@ const NewProject = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetch("https://11eb-45-118-208-34.ngrok-free.app/api/get_skills", {
+        fetch("/api/get_skills", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -50,7 +57,7 @@ const NewProject = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        fetch('https://11eb-45-118-208-34.ngrok-free.app/api/project_register', {
+        fetch('/api/project_register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -65,7 +72,7 @@ const NewProject = () => {
         })
         .then((data) => {
             console.log('Project registered successfully:', data);
-            navigate('/');  
+            navigate(-1)
         })
         .catch((error) => {
             console.error('Error registering project:', error);
@@ -97,7 +104,7 @@ const NewProject = () => {
                         width: '100%',
                     }}
                 >
-                    <TextField
+                    {/* <TextField
                         margin="normal"
                         required
                         fullWidth
@@ -106,8 +113,8 @@ const NewProject = () => {
                         name="id"
                         value={projectData.id}
                         onChange={handleChange}
-                    />
-                    <TextField
+                    /> */}
+                    {/* <TextField
                         margin="normal"
                         required
                         fullWidth
@@ -117,7 +124,7 @@ const NewProject = () => {
                         type="password"  
                         value={projectData.pwd}
                         onChange={handleChange}
-                    />
+                    /> */}
                     <TextField
                         margin="normal"
                         required
@@ -138,6 +145,16 @@ const NewProject = () => {
                         multiline
                         rows={4}  
                         value={projectData.project_descrp}
+                        onChange={handleChange}
+                    />
+                    <TextField
+                        margin="normal"
+                        required
+                        fullWidth
+                        id="github"
+                        label="GitHub URL"
+                        name="github"
+                        value={projectData.github}
                         onChange={handleChange}
                     />
                     <Autocomplete
