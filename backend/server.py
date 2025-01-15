@@ -122,7 +122,7 @@ class RegisterResource(Resource):
         db.session.add(acc)
         db.session.commit()
         
-        data = {'user_id':id, 'Friend':[], 'Projects':[]}
+        data = {'user_id':id, 'Friend':[], 'Projects':[], 'Requests':[]}
         try:
             mongo_account_data.insert_one(data)
             return jsonify({"message": "User data added successfully", "status": 200})
@@ -348,6 +348,17 @@ class GetFeaturesByID(Resource):
         print(project)
         return jsonify({'features': project['Features'], 'status': 200})
     
+class GetProjectByID(Resource):
+    def post(self):
+        id = request.json.get('project_id')
+        project = mongo_project_data.find_one({'_id': id})
+
+        if not project:
+            return jsonify({'message': 'Project not found', 'status': 404})
+
+        print(project)
+        return jsonify({'project': project, 'status': 200})
+    
 class GetContributorsByID(Resource):
     def post(self):
         id = request.json.get('project_id')
@@ -463,7 +474,7 @@ def get_skills():
 def send_requests():
     id = request.json.get('user_id')
     prj_id = request.json.get('project_id')
-    
+    print(id)
     acc = AccountModel.query.filter_by(user_id=id).first()
     
     if not acc:
@@ -471,7 +482,7 @@ def send_requests():
 
     
     result = mongo_project_data.find_one({'_id':prj_id})
-    
+    print(result)
     if id not in result['Requests']:
         result['Requests'].append(id)
         mongo_project_data.update_one({'_id': prj_id}, {'$set': result})
@@ -485,7 +496,7 @@ def accept_requests():
     pwd = request.json.get('pwd')
     prj_id = request.json.get('project_id')
     name = request.json.get('name')
-    
+    print(name)
     acc = AccountModel.query.filter_by(user_id=id).first()
     
     if not acc:
@@ -534,6 +545,30 @@ class AccountData(Resource):
         else:
             return jsonify({"message": "Uccessfull", "status": 400})
         
+@app.route('/api/change_acc_details', methods=['POST'])
+def change_acc_details():
+    id = request.json.get('user_id')
+    pwd = request.json.get('pwd')
+    email = request.json.get('email')
+    number = request.json.get('mobile')
+    
+    acc = AccountModel.query.filter_by(user_id=id).first()
+    
+    if not acc:
+        return jsonify({"message": "Account not fount", "status": 404})
+    elif acc.user_pwd != pwd:
+        return jsonify({"message": "Incorrect", "status": 404})
+    else:
+        if email:
+            acc.user_email = email
+        
+        if number:
+            acc.user_mobile = number
+            
+        db.session.commit()
+        db.session.close()
+        return jsonify({"message" : "Successful", 'status' : 200})
+        
            
 api.add_resource(LoginResource, '/api/login')
 api.add_resource(RegisterResource, '/api/register')
@@ -547,6 +582,7 @@ api.add_resource(PostProjectMessage, '/api/post_message')
 api.add_resource(AccountData, '/api/get_account')
 api.add_resource(GetFeaturesByID, '/api/get_features')
 api.add_resource(GetContributorsByID, '/api/get_contributors')
+api.add_resource(GetProjectByID, '/api/get_project_id')
 
 if __name__ == "__main__":
     app.run(debug=True)

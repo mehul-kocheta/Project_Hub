@@ -19,5 +19,6 @@ from pymongo import MongoClient
 # resp = requests.post('http://127.0.0.1:5000/api/post_message', json = {'sender_id' : 'mehul', 'pwd' : 'xxxx', 'project_id' : 40, 'message':'Hiii'})
 # resp = requests.post('http://127.0.0.1:5000/api/get_features', json = {'project_id' : 39})
 # resp = requests.post('http://127.0.0.1:5000/api/send_request', json = {'user_id':'Pranu Pranjal', 'project_id' : 45})
-resp = requests.post('http://127.0.0.1:5000/api/accept_request', json = {'user_id':'mehul', 'pwd':'xxxx', 'project_id' : 45, 'name':'Pranu Pranjal'})
+# resp = requests.post('http://127.0.0.1:5000/api/accept_request', json = {'user_id':'mehul', 'pwd':'xxxx', 'project_id' : 45, 'name':'Pranu Pranjal'})
+resp = requests.post('http://127.0.0.1:5000/api/change_acc_details', json = {'user_id':'mehul', 'pwd':'xxxx', 'mobile' : 84350767})
 print(resp.json())
