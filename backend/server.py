@@ -180,7 +180,7 @@ class ProjectRegisterResource(Resource):
             results['Projects'].append(prj.project_id)
             mongo_account_data.update_one({"user_id": id}, {'$set': results})
             
-            data = {'_id':prj.project_id, 'Project_name':name, 'Project_descrp':descrp, 'Project_author':id, 'Skills':skills, 'Contributors':[], 'Features':{}, 'Messages':[], 'Project_URL':git}
+            data = {'_id':prj.project_id, 'Project_name':name, 'Project_descrp':descrp, 'Project_author':id, 'Skills':skills, 'Contributors':[], 'Features':{}, 'Messages':[], 'Project_URL':git, 'Requests':[]}
             mongo_project_data.insert_one(data)
             
             return jsonify({'message' : "Successfull", 'status' : 200})
@@ -459,6 +459,51 @@ def get_skills():
     except Exception as e:
         return jsonify({'message': str(e), 'status': 500})
     
+@app.route('/api/send_request', methods=['POST'])
+def send_requests():
+    id = request.json.get('user_id')
+    prj_id = request.json.get('project_id')
+    
+    acc = AccountModel.query.filter_by(user_id=id).first()
+    
+    if not acc:
+        return jsonify({'message': "Username does not exists", 'status': 200})
+
+    
+    result = mongo_project_data.find_one({'_id':prj_id})
+    
+    if id not in result['Requests']:
+        result['Requests'].append(id)
+        mongo_project_data.update_one({'_id': prj_id}, {'$set': result})
+        return jsonify({'message': "Request sent Successfully", 'status': 200})
+    else:
+        return jsonify({'message': "Request was already sent", 'status': 400})
+    
+@app.route('/api/accept_request', methods=['POST'])
+def accept_requests():
+    id = request.json.get('user_id')
+    pwd = request.json.get('pwd')
+    prj_id = request.json.get('project_id')
+    name = request.json.get('name')
+    
+    acc = AccountModel.query.filter_by(user_id=id).first()
+    
+    if not acc:
+        return jsonify({'message': "Username does not exists", 'status': 404})
+    elif acc.user_pwd != pwd:
+        return jsonify({'message': "Incorrect password", 'status': 409})
+    
+    result = mongo_project_data.find_one({'_id':prj_id})
+    
+    if not result:
+        return jsonify({'message': "Project does not exists", 'status': 404})
+    else:
+        result['Requests'].remove(name)
+        result['Contributors'].append(name)
+        mongo_project_data.update_one({'_id': prj_id}, {'$set': result})
+        return jsonify({'message': "Request was accepted", 'status': 400})
+    
+    
 @app.route('/api/get_github', methods=['POST'])
 def add_user_data():
     id = request.json.get('project_id')
@@ -472,8 +517,9 @@ def add_user_data():
         return jsonify({"message": str(e), "status": 500})
     
 class AccountData(Resource):
-    def put(self):
+    def post(self):
         id = request.json.get('user_id')
+        print(id)
         result = mongo_account_data.find_one({'user_id': id})
         result.pop('_id', None)
         Projects = list(result['Projects'])
@@ -494,7 +540,7 @@ api.add_resource(RegisterResource, '/api/register')
 api.add_resource(PasswordChangeResource, '/api/pwd_reset')
 api.add_resource(ProjectRegisterResource, '/api/project_register')
 api.add_resource(AddContributorResource, '/api/add_contributor')
-api.add_resource(AddFeatureResource, '/api/add_feature') #post
+api.add_resource(AddFeatureResource, '/api/add_feature')
 api.add_resource(ToggleFeatureStatus, '/api/toggle_feature')
 api.add_resource(GetProjectByAuthor, '/api/project')
 api.add_resource(PostProjectMessage, '/api/post_message')

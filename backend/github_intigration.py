@@ -35,6 +35,8 @@ def get_open_issues(owner, repo):
         return []
 
 def get_repo_data(repo_url):
+    if not repo_url:
+        return None
     owner, repo = repo_url.split("/")[-2:]
     repo_info = get_repo_info(owner, repo)
 
