@@ -440,6 +440,7 @@ def search_accounts():
     query = {'user_id': {'$regex': s, '$options': 'i'}} 
     result = mongo_account_data.find(query)
     result_list = [doc for doc in result]
+    print(result_list)
     for elem in result_list:
         elem['_id'] = str(elem['_id'])
     return jsonify({'accounts': result_list, 'status': 200})
