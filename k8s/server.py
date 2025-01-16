@@ -17,19 +17,19 @@ import json
 app = Flask(__name__)
 api = Api(app)
 app.secret_key = 'mehul'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:root@127.0.0.1:3306/projecthub'
+app.config['SQLALCHEMY_DATABASE_URI'] = str(os.environ['DATABASE_URI'])
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USERNAME'] = 'testflaskapplication@gmail.com'
 app.config['MAIL_PASSWORD'] =  str(os.environ['pass_key'])
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
-mongo_client = MongoClient("mongodb://localhost:27017/")
-mongo_db = mongo_client["project_hub"]
+mongo_client = MongoClient(str(os.environ['MONGO_URI']))
+mongo_db = mongo_client["projecthub"]
 mongo_project_data = mongo_db["project_data"]
 mongo_account_data = mongo_db["account"]
 db = SQLAlchemy(app)
-engine = create_engine('mysql+mysqlconnector://root:root@127.0.0.1:3306/projecthub')
+engine = create_engine(str(os.environ['DATABASE_URI']))
 Session = sessionmaker(bind=engine) 
 session = Session()
 
@@ -83,10 +83,12 @@ with app.app_context():
     
 @app.before_request
 def before_request():
+    # Create a new session before each request
     g.db_session = Session()
 
 @app.teardown_request
 def teardown_request(exception=None):
+    # Close the session after the request is finished
     if hasattr(g, 'db_session'):
         g.db_session.close()
 
@@ -543,7 +545,7 @@ def add_user_data():
     
 @app.route('/api/add_skills', methods=['POST'])
 def add_skills():
-    id = request.json.get('id')
+    id = request.json.get('project_id')
     pwd = request.json.get('pwd')
     skill = request.json.get('skill')
     try:
@@ -575,7 +577,7 @@ class AccountData(Resource):
         
         result3 = mongo_project_data.find({'_id': {'$in': Requests}})
         result3_list = [doc for doc in result3]
-        print(result3_list)
+        
         if result:
             return jsonify({"message": "Account data retrieved successfully", "status": 200, 'data' : result, 'projects':result1_list, 'requests':result3_list})
         else:
@@ -622,4 +624,4 @@ api.add_resource(GetContributorsByID, '/api/get_contributors')
 api.add_resource(GetProjectByID, '/api/get_project_id')
 
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True)
