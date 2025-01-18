@@ -1,14 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { TextField, Button, Typography, Box, Container, Chip, Autocomplete } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+
 
 const NewProject = () => {
+    const location = useLocation();
+    const id = location.state?.user;
+    const pwd = location.state?.pwd;
+    console.log(id);
+    console.log(pwd);
     const [projectData, setProjectData] = useState({
-        id: '',
-        pwd: '',
+        id: id,
+        pwd: pwd,
         project_name: '',
         project_descrp: '',
         skills: [],
+        github: '',
     });
 
     const [inputSkill, setInputSkill] = useState('');
@@ -16,7 +23,7 @@ const NewProject = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetch("https://11eb-45-118-208-34.ngrok-free.app/api/get_skills", {
+        fetch("/api/get_skills", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -50,7 +57,7 @@ const NewProject = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        fetch('https://11eb-45-118-208-34.ngrok-free.app/api/project_register', {
+        fetch('/api/project_register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -65,7 +72,7 @@ const NewProject = () => {
         })
         .then((data) => {
             console.log('Project registered successfully:', data);
-            navigate('/');  
+            navigate(-1)
         })
         .catch((error) => {
             console.error('Error registering project:', error);
@@ -74,50 +81,31 @@ const NewProject = () => {
 
     return (
         <Container maxWidth="md">
-            <Box
-                sx={{
-                    marginTop: 8,
-                    display: 'flex',
-                    flexDirection: 'column', 
-                    alignItems: 'center',
-                    width: '100%' 
-                }}
-            >
-                <Typography component="h1" variant="h5">
-                    Create New Project
-                </Typography>
-                <Box
-                    component="form"
-                    onSubmit={handleSubmit}
+            <Box sx={{
+                marginTop: 8,
+                marginBottom: 8,
+                background: 'rgba(255, 255, 255, 0.9)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '20px',
+                padding: '40px',
+                boxShadow: '0px 4px 20px rgba(0,0,0,0.1)',
+            }}>
+                <Typography 
+                    component="h1" 
+                    variant="h4"
                     sx={{
-                        mt: 3,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 2, 
-                        width: '100%',
+                        marginBottom: 4,
+                        fontWeight: 600,
+                        textAlign: 'center',
+                        background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
                     }}
                 >
-                    <TextField
-                        margin="normal"
-                        required
-                        fullWidth
-                        id="name"
-                        label="Name"
-                        name="id"
-                        value={projectData.id}
-                        onChange={handleChange}
-                    />
-                    <TextField
-                        margin="normal"
-                        required
-                        fullWidth
-                        id="password"
-                        label="Password"
-                        name="pwd"
-                        type="password"  
-                        value={projectData.pwd}
-                        onChange={handleChange}
-                    />
+                    Create New Project
+                </Typography>
+
+                <Box component="form" onSubmit={handleSubmit}>
                     <TextField
                         margin="normal"
                         required
@@ -138,6 +126,16 @@ const NewProject = () => {
                         multiline
                         rows={4}  
                         value={projectData.project_descrp}
+                        onChange={handleChange}
+                    />
+                    <TextField
+                        margin="normal"
+                        required
+                        fullWidth
+                        id="github"
+                        label="GitHub URL"
+                        name="github"
+                        value={projectData.github}
                         onChange={handleChange}
                     />
                     <Autocomplete
@@ -170,6 +168,16 @@ const NewProject = () => {
                                 label="Skills Required"
                                 placeholder="Add skills"
                                 fullWidth
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        '&:hover fieldset': {
+                                            borderColor: '#4158D0',
+                                        },
+                                        '&.Mui-focused fieldset': {
+                                            borderColor: '#C850C0',
+                                        },
+                                    },
+                                }}
                             />
                         )}
                     />
@@ -178,9 +186,18 @@ const NewProject = () => {
                         type="submit"
                         fullWidth
                         variant="contained"
-                        sx={{ mt: 3, mb: 2 }}
+                        sx={{
+                            mt: 3,
+                            mb: 2,
+                            background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                                transform: 'translateY(-2px)',
+                                boxShadow: '0 8px 15px rgba(0,0,0,0.2)',
+                            },
+                        }}
                     >
-                        Submit Project
+                        Create Project
                     </Button>
                 </Box>
             </Box>
