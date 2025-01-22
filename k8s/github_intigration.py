@@ -39,7 +39,7 @@ def get_repo_data(repo_url):
         return None
     owner, repo = repo_url.split("/")[-2:]
     repo_info = get_repo_info(owner, repo)
-
+    data = {}
     if repo_info:
         data = {
             "Github URL": repo_url,

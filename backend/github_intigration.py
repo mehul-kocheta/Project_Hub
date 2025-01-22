@@ -1,8 +1,11 @@
 import requests
+import os
 
 def get_repo_info(owner, repo):
     url = f"https://api.github.com/repos/{owner}/{repo}"
-    headers = {"Accept": "application/vnd.github+json"}
+    headers = {"Accept": "application/vnd.github+json",
+               "Authorization" : str(os.environ['github_key'])
+               }
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         return response.json()
@@ -38,8 +41,10 @@ def get_repo_data(repo_url):
     if not repo_url:
         return None
     owner, repo = repo_url.split("/")[-2:]
+    print(owner)
+    print(repo)
     repo_info = get_repo_info(owner, repo)
-
+    data = {}
     if repo_info:
         data = {
             "Github URL": repo_url,

@@ -83,12 +83,10 @@ with app.app_context():
     
 @app.before_request
 def before_request():
-    # Create a new session before each request
     g.db_session = Session()
 
 @app.teardown_request
 def teardown_request(exception=None):
-    # Close the session after the request is finished
     if hasattr(g, 'db_session'):
         g.db_session.close()
 
@@ -96,7 +94,6 @@ class LoginResource(Resource):
     def post(self):
         id = request.json.get('id')
         pwd = request.json.get('pwd')
-        print(id)
         results = AccountModel.query.filter_by(user_id = id).first()
         if not results:
             return jsonify({"message" : "User does not exists", 'status' : 404})
@@ -112,6 +109,10 @@ class RegisterResource(Resource):
         pwd = request.json.get('pwd')
         email = request.json.get('email')
         number = request.json.get('mobile')
+        Linkedin = request.json.get('Linkedin')
+        github = request.json.get('github')
+        college = request.json.get('college_name')
+        degree = request.json.get('degree')
         
         results = AccountModel.query.filter_by(user_id = id).first()
         if results:
@@ -121,7 +122,18 @@ class RegisterResource(Resource):
         db.session.add(acc)
         db.session.commit()
         
-        data = {'user_id':id, 'Friend':[], 'Projects':[], 'Requests':[], 'Skills':[]}
+        data = {
+            'user_id':id, 
+            'Linkedin':Linkedin, 
+            'github':github, 
+            'Email' : email, 
+            'Friend':[], 
+            'Projects':[], 
+            'Requests':[], 
+            'Skills':[], 
+            'College_name':college,
+            'Degree':degree
+            }
         try:
             mongo_account_data.insert_one(data)
             return jsonify({"message": "User data added successfully", "status": 200})
@@ -267,12 +279,21 @@ class AcceptContributorResource(Resource):
         else:
             result = mongo_account_data.find_one({'user_id':id})
             if project_id in result['Requests']:
-                result['Requests'].remove(project_id)
-                result['Projects'].append(project_id)
-                
-                mongo_account_data.update_one({'user_id': id}, {'$set': result})
-                
+                if project_id not in result['Projects']:
+                    result['Requests'].remove(project_id)
+                    result['Projects'].append(project_id)
+                    
+                    mongo_account_data.update_one({'user_id': id}, {'$set': result})
+                    
+                    temp = mongo_project_data.find_one({'_id':project_id})
+                    temp['Contributors'].append(id)
+                    mongo_project_data.update_one({'_id': project_id}, {'$set': temp})
+                else:
+                    result['Requests'].remove(project_id)
+                    mongo_account_data.update_one({'user_id': id}, {'$set': result})
+                    
                 return jsonify({'message' : "Successfully Accepted", 'status' : 200})
+            
             else:
                 return jsonify({'message' : "Invitation Does not exists", 'status' : 404})
         
@@ -436,7 +457,7 @@ def search_projects():
     if skills:
         skills = list(skills)    
     
-    query = "SELECT p.project_id, p.project_name, p.project_descrp, p.project_author FROM project_data p "
+    query = "SELECT p.project_id, p.project_name, p.project_descrp, p.project_author FROM Project_data p "
     
     if skills:
         for skill in skills:
@@ -477,10 +498,11 @@ def get_skills():
     query = text("SELECT * FROM skill")
     result = g.db_session.execute(query)
     
-    try:
+    try:    
         result = g.db_session.execute(query)
 
-        skill = [row[0] for row in result]
+        skill = [row for row in result]
+        print(skill)
         return jsonify({'skills': skill, 'status': 200})
     
     except Exception as e:
@@ -589,6 +611,11 @@ def change_acc_details():
     pwd = request.json.get('pwd')
     email = request.json.get('email')
     number = request.json.get('mobile')
+    github = request.json.get('github')
+    linkedin = request.json.get('linkedin')
+    college = request.json.get('college_name')
+    degree = request.json.get('degree')
+    
     
     acc = AccountModel.query.filter_by(user_id=id).first()
     
@@ -597,11 +624,28 @@ def change_acc_details():
     elif acc.user_pwd != pwd:
         return jsonify({"message": "Incorrect", "status": 404})
     else:
+        m_acc = mongo_account_data.find_one({'user_id':id})
+        
         if email:
             acc.user_email = email
+            m_acc['Email'] = email
         
         if number:
             acc.user_mobile = number
+            
+        if github:
+            m_acc['github'] = github
+            
+        if linkedin:
+            m_acc['Linkedin'] = linkedin
+            
+        if college:
+            m_acc['College_name'] = college
+            
+        if degree:
+            m_acc['Degree'] = degree
+            
+        mongo_account_data.update_one({'user_id':id},{'$set':m_acc})
             
         db.session.commit()
         db.session.close()

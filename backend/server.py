@@ -13,6 +13,7 @@ import datetime
 from flask_cors import CORS
 from pymongo import MongoClient
 import json
+from groq_test import download_github_repo, read_py_files, ask_groq_api
 
 app = Flask(__name__)
 api = Api(app)
@@ -110,6 +111,15 @@ class RegisterResource(Resource):
         pwd = request.json.get('pwd')
         email = request.json.get('email')
         number = request.json.get('mobile')
+        Linkedin = request.json.get('Linkedin')
+        github = request.json.get('github')
+        college = request.json.get('college_name')
+        degree = request.json.get('degree')
+        skills = request.json.get('skills')
+        about = request.json.get('about')
+        
+        if not skills:
+            skills = []
         
         results = AccountModel.query.filter_by(user_id = id).first()
         if results:
@@ -119,7 +129,20 @@ class RegisterResource(Resource):
         db.session.add(acc)
         db.session.commit()
         
-        data = {'user_id':id, 'Friend':[], 'Projects':[], 'Requests':[], 'Skills':[]}
+        data = {
+            'user_id':id, 
+            'Linkedin':Linkedin, 
+            'github':github, 
+            'Email' : email, 
+            'Friend':[], 
+            'Projects':[], 
+            'Requests':[], 
+            'Skills':skills, 
+            'College_name':college,
+            'Degree':degree,
+            'Pending':[],
+            'about':about
+            }
         try:
             mongo_account_data.insert_one(data)
             return jsonify({"message": "User data added successfully", "status": 200})
@@ -152,6 +175,10 @@ class ProjectRegisterResource(Resource):
         id = request.json.get('id')
         pwd = request.json.get('pwd')
         git = request.json.get('github')
+        deadline = request.json.get('deadline')
+        
+        if not deadline:
+            deadline = None
         
         print(git)
         
@@ -179,7 +206,7 @@ class ProjectRegisterResource(Resource):
             results['Projects'].append(prj.project_id)
             mongo_account_data.update_one({"user_id": id}, {'$set': results})
             
-            data = {'_id':prj.project_id, 'Project_name':name, 'Project_descrp':descrp, 'Project_author':id, 'Skills':skills, 'Contributors':[], 'Features':{}, 'Messages':[], 'Project_URL':git, 'Requests':[]}
+            data = {'_id':prj.project_id, 'Project_name':name, 'Project_descrp':descrp, 'Project_author':id, 'Skills':skills, 'Contributors':[], 'Features':{}, 'Messages':[], 'Project_URL':git, 'Requests':[], 'Deadline':deadline}
             mongo_project_data.insert_one(data)
             
             return jsonify({'message' : "Successfull", 'status' : 200})
@@ -190,21 +217,24 @@ class PostProjectMessage(Resource):
         id = request.json.get('sender_id')
         message = request.json.get('message')
         pwd = request.json.get('pwd')
-        
         acc = AccountModel.query.filter_by(user_id = id).first()
-        
+        print(id)
         if not acc:
             db.session.close()
+            print(1)
             return jsonify({'message' : "User does not exists", 'status' : 404})
         elif acc.user_pwd != pwd:
+            print(2)
             return jsonify({'message' : "Wrong Passsword", 'status' : 409})
         else:
             project = mongo_project_data.find_one({'_id': project_id})
 
             if not project:
+                print(5)
                 return jsonify({'message': 'Project not found', 'status': 404})
 
             if id != project['Project_author'] and id not in project['Contributors']:
+                print(6)
                 return jsonify({'message': 'Unauthorized access', 'status': 403})
 
 
@@ -216,6 +246,7 @@ class PostProjectMessage(Resource):
 
             mongo_project_data.update_one({'_id': project_id}, {'$set': project})
 
+            print(3)
             return jsonify({'message': 'Message posted successfully', 'status': 200})
         
 
@@ -265,12 +296,21 @@ class AcceptContributorResource(Resource):
         else:
             result = mongo_account_data.find_one({'user_id':id})
             if project_id in result['Requests']:
-                result['Requests'].remove(project_id)
-                result['Projects'].append(project_id)
-                
-                mongo_account_data.update_one({'user_id': id}, {'$set': result})
-                
+                if project_id not in result['Projects']:
+                    result['Requests'].remove(project_id)
+                    result['Projects'].append(project_id)
+                    
+                    mongo_account_data.update_one({'user_id': id}, {'$set': result})
+                    
+                    temp = mongo_project_data.find_one({'_id':project_id})
+                    temp['Contributors'].append(id)
+                    mongo_project_data.update_one({'_id': project_id}, {'$set': temp})
+                else:
+                    result['Requests'].remove(project_id)
+                    mongo_account_data.update_one({'user_id': id}, {'$set': result})
+                    
                 return jsonify({'message' : "Successfully Accepted", 'status' : 200})
+            
             else:
                 return jsonify({'message' : "Invitation Does not exists", 'status' : 404})
         
@@ -344,7 +384,6 @@ class ToggleFeatureStatus(Resource):
 class GetProjectByAuthor(Resource):
     def post(self):
         id = request.json.get('project_author')
-        # project = list(mongo_project_data.find({'Project_author': id}))
         project = list(mongo_project_data.find({'$or': [{'Project_author': id}, {'Contributors': {'$in': [id]}}]}))
         if not project:
             return jsonify({'message': 'Project not found', 'status': 404})
@@ -429,23 +468,22 @@ def remove_acc():
 @app.route('/api/search_projects', methods=['POST'])
 def search_projects():
     substring = request.json.get('substring')
-    print(substring)
     skills = request.json.get('skills')
     if skills:
-        skills = list(skills)    
+        skills = list(skills)
     
     query = "SELECT p.project_id, p.project_name, p.project_descrp, p.project_author FROM project_data p "
     
     if skills:
         for skill in skills:
-            query += f"INNER JOIN {skill} ON p.project_id = {skill}.project_name "
+            query += f"LEFT JOIN {skill} ON p.project_id = {skill}.project_name "
     
     conditions = []
     if substring:
         conditions.append(f"p.project_name LIKE '%{substring}%'")
-    if skills: 
-        for skill in skills: 
-            conditions.append(f"{skill}.project_name IS NOT NULL")
+    if skills:
+        skill_conditions = " OR ".join([f"{skill}.project_name IS NOT NULL" for skill in skills])
+        conditions.append(f"({skill_conditions})")
     
     if conditions:
         query += "WHERE " + " AND ".join(conditions)
@@ -453,10 +491,19 @@ def search_projects():
     try:
         result = g.db_session.execute(text(query))
         projects = [dict(row._mapping) for row in result]
-        return jsonify({'projects': projects, 'status': 200})
+        
+        data = []
+        
+        for i in range(len(projects)):
+            temp = projects[i]['project_id']
+            data.append(mongo_project_data.find_one({"_id":temp}))
+            print(projects[i])
+        
+        return jsonify({'projects': data, 'status': 200})
     
     except Exception as e:
         return jsonify({'message': str(e), 'status': 500})
+
 
 @app.route('/api/search_accounts', methods=['POST'])
 def search_accounts():
@@ -472,13 +519,14 @@ def search_accounts():
 
 @app.route('/api/get_skills', methods=['POST'])
 def get_skills():
-    query = text("SELECT * FROM skill")
+    query = text("SELECT * FROM skills")
     result = g.db_session.execute(query)
     
     try:
         result = g.db_session.execute(query)
 
-        skill = [row[0] for row in result]
+        skill = [list(row) for row in result]
+        print(skill)
         return jsonify({'skills': skill, 'status': 200})
     
     except Exception as e:
@@ -496,11 +544,19 @@ def send_requests():
 
     
     result = mongo_project_data.find_one({'_id':prj_id})
+    account = mongo_account_data.find_one({'user_id':id})
+    
     print(result)
     if id not in result['Requests']:
         result['Requests'].append(id)
         mongo_project_data.update_one({'_id': prj_id}, {'$set': result})
-        return jsonify({'message': "Request sent Successfully", 'status': 200})
+        
+        if prj_id not in account['Pending']:
+            account['Pending'].append(prj_id)
+            mongo_account_data.update_one({'user_id': id}, {'$set': account})
+            
+        return jsonify({'message': "Request sent Successfully" ,'status': 200})
+    
     else:
         return jsonify({'message': "Request was already sent", 'status': 400})
     
@@ -520,12 +576,16 @@ def accept_requests():
     
     result = mongo_project_data.find_one({'_id':prj_id})
     
+    account = mongo_account_data.find_one({'user_id':name})
+    
     if not result:
         return jsonify({'message': "Project does not exists", 'status': 404})
     else:
         result['Requests'].remove(name)
         result['Contributors'].append(name)
+        account['Pending'].remove(prj_id)
         mongo_project_data.update_one({'_id': prj_id}, {'$set': result})
+        mongo_account_data.update_one({'user_id': name}, {'$set': account})
         return jsonify({'message': "Request was accepted", 'status': 400})
     
     
@@ -559,12 +619,10 @@ def add_skills():
 class AccountData(Resource):
     def post(self):
         id = request.json.get('user_id')
-        print(id)
         result = mongo_account_data.find_one({'user_id': id})
         if not result:
             print('test')
             return jsonify({"message": "ID not found", "status": 404})
-        print(result)
         result.pop('_id', None)
         Projects = list(result['Projects'])
         Requests = list(result['Requests'])
@@ -575,9 +633,42 @@ class AccountData(Resource):
         
         result3 = mongo_project_data.find({'_id': {'$in': Requests}})
         result3_list = [doc for doc in result3]
-        print(result3_list)
+        
+        data = []
+        for _ in range(len(result['Pending'])):
+            data.append(mongo_project_data.find_one({'_id': _}))
+        
         if result:
-            return jsonify({"message": "Account data retrieved successfully", "status": 200, 'data' : result, 'projects':result1_list, 'requests':result3_list})
+            return jsonify({"message": "Account data retrieved successfully", "status": 200, 'data' : result, 'projects':result1_list, 'requests':result3_list, 'pending':data})
+        else:
+            return jsonify({"message": "Uccessfull", "status": 400})
+        
+        
+class LLM_chat(Resource):
+    def post(self):
+        id = request.json.get('user_id')
+        pwd = request.json.get('pwd')
+        project_id = request.json.get('project_id')
+        prompt = request.json.get('prompt')
+        
+        result = mongo_project_data.find_one({'_id': project_id})
+        # git_repo = result['Github']
+        
+        # return jsonify({"message": "Successful", "status": 200, 'response' : "Hii \n This is a new line"})
+        
+        if not result:
+            return jsonify({"message": "Project not found", "status": 404})
+        
+        git = str(result['Project_URL'])
+        
+        download_github_repo(git)
+        context = read_py_files()
+        response = ask_groq_api(prompt, context)
+
+        print(type(response))
+        
+        if result:
+            return jsonify({"message": "Successful", "status": 200, 'response' : response})
         else:
             return jsonify({"message": "Uccessfull", "status": 400})
         
@@ -587,6 +678,12 @@ def change_acc_details():
     pwd = request.json.get('pwd')
     email = request.json.get('email')
     number = request.json.get('mobile')
+    github = request.json.get('github')
+    linkedin = request.json.get('linkedin')
+    college = request.json.get('college_name')
+    degree = request.json.get('degree')
+    about = request.json.get('about')
+    
     
     acc = AccountModel.query.filter_by(user_id=id).first()
     
@@ -595,11 +692,31 @@ def change_acc_details():
     elif acc.user_pwd != pwd:
         return jsonify({"message": "Incorrect", "status": 404})
     else:
+        m_acc = mongo_account_data.find_one({'user_id':id})
+        
         if email:
             acc.user_email = email
+            m_acc['Email'] = email
         
         if number:
             acc.user_mobile = number
+            
+        if github:
+            m_acc['github'] = github
+            
+        if linkedin:
+            m_acc['Linkedin'] = linkedin
+            
+        if college:
+            m_acc['College_name'] = college
+            
+        if degree:
+            m_acc['Degree'] = degree
+            
+        if about:
+            m_acc['about'] = about
+            
+        mongo_account_data.update_one({'user_id':id},{'$set':m_acc})
             
         db.session.commit()
         db.session.close()
@@ -620,6 +737,7 @@ api.add_resource(AccountData, '/api/get_account')
 api.add_resource(GetFeaturesByID, '/api/get_features')
 api.add_resource(GetContributorsByID, '/api/get_contributors')
 api.add_resource(GetProjectByID, '/api/get_project_id')
+api.add_resource(LLM_chat, '/api/llm_chat')
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0')
