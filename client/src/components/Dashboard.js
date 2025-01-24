@@ -1,62 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { 
-  Box, 
-  Typography, 
-  Button, 
-  TextField, 
-  Grid, 
-  Paper, 
-  Fade, 
-  IconButton,
-  createTheme,
-  ThemeProvider
-} from '@mui/material';
+import { FaEnvelope, FaLock,FaPaperPlane, FaEye, FaDrawPolygon, FaGithub, FaRProject, FaSearch, FaSignInAlt, FaUser } from 'react-icons/fa';
+// import {  } from 'react-icons/si'; 
+import { Box, Typography, Button, TextField, Grid, Fade, IconButton } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import SearchIcon from '@mui/icons-material/Search';
-import AddCircleIcon from '@mui/icons-material/AddCircle';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import WorkIcon from '@mui/icons-material/Work';
-import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
-import PersonSearchOutlinedIcon from '@mui/icons-material/PersonSearchOutlined';
 import '../App.css';
-
-// Define theme outside of component
-const theme = createTheme({
-  typography: {
-    fontFamily: "'Poppins', sans-serif",
-    h3: {
-      fontSize: '2.5rem',
-      fontWeight: 700,
-    },
-    h5: {
-      fontWeight: 600,
-    },
-    h6: {
-      fontWeight: 500,
-    }
-  },
-  palette: {
-    primary: {
-      main: '#4158D0',
-    },
-    secondary: {
-      main: '#C850C0',
-    }
-  }
-});
+import proimg from '../assets/ProjectHub.jpg';
+import Navbar from './Navbar';
 
 const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  
   const [userSearchTerm, setUserSearchTerm] = useState('');
   const [searchResult, setSearchResult] = useState([]);
+  const [req, setReq] = useState([]);
   const [userSearchResult, setUserSearchResult] = useState([]);
+  const [userSkills, setUserSkills] = useState('');
   const [auth, setAuth] = useState([]);
+  const [pro, setPro] = useState([]);
   const location = useLocation();
   const user = location.state?.id;
   const pass = location.state?.pass;
-//   console.log(user)
 
   useEffect(() => {
     fetch("/api/project", {
@@ -80,8 +43,54 @@ const Dashboard = () => {
       })
       .catch((error) => console.error("Fetch error:", error));
   }, [user]);
+  console.log(userSkills);
+  useEffect(() => {
+    fetch("/api/search_projects", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        substring: userSkills[0],
+      })
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log(data);
+        setPro(data);
+      })
+      .catch((error) => console.error("Fetch error:", error));
+  }, [user]);
 
   const navigate = useNavigate();
+  useEffect(() => {
+    fetch("/api/get_account", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        user_id: user,
+      })
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log(data.data.Skills);
+        setUserSkills(data.data.Skills);
+        setReq(data.data.Requests);
+      })
+      .catch((error) => console.error("Fetch error:", error));
+  }, [user]);
 
   const handlegetResult = async () => {
     try {
@@ -90,7 +99,7 @@ const Dashboard = () => {
       });
       if (response) {
         setSearchResult(response.data.projects);
-        console.log(response);
+        console.log(response.data.projects);
       }
     } catch (error) {
       console.error('Error finding:', error);
@@ -110,550 +119,285 @@ const Dashboard = () => {
     }
   };
 
+  // New RecommendedProjects component
+  console.log(pro.projects);
+  const RecommendedProjects = ({ projects, user, pass }) => (
+    <Box sx={{ marginTop: '40px', textAlign: 'left' }}>
+      <section id="projects" className="projects-section">
+        <div className="projects-container">
+          <h2 className="projects-title">Recommended Projects</h2>
+          <div className="projects-grid" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            {projects && projects.length > 0 ? (
+              projects.map((project, index) => (
+                <div
+                  variant="contained"
+                  onClick={() => navigate('/viewproject', { state: { id: project._id, ori_id: user }})}
+                  key={index}
+                  className='project-card'
+                  style={{ width: '100%', maxWidth: '600px', height: '400px', margin: '10px 0' }}
+                >
+                  <div className="project-image-container" style={{ height: '40%' }}>
+                    <img 
+                      src={proimg}
+                      alt='{project.Project_name}' 
+                      className="project-image"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    <div className="project-links">
+                      <a 
+                        href={project.Project_URL} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="project-link"
+                      >
+                        Code
+                      </a>
+                    </div>
+                  </div>
+                  <div className="project-content" style={{ height: '60%', overflow: 'hidden' }}>
+                    <h3 className="project-title">{project.Project_name}</h3>
+                    <p className="project-description">{project.Project_descrp}</p>
+                    
+                    <div className="project-tech">
+                      <h4 className="tech-title">Technologies Used:</h4>
+                      <div className="tech-list">
+                        {project.Skills.map((tech, techIndex) => (
+                          <div key={techIndex} className="tech-item">
+                            <span>{tech}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <Typography variant="body1" sx={{ marginLeft: '15px' }}>
+                No projects found
+              </Typography>
+            )}
+          </div>
+        </div>
+      </section>
+    </Box>
+  );
+
   return (
-    <ThemeProvider theme={theme}>
-      <Box sx={{ 
-        padding: '20px', 
-        maxWidth: '1400px', 
-        margin: 'auto',
-        background: 'linear-gradient(135deg, #f6f9fc 0%, #eef2f7 100%)',
-        minHeight: '100vh',
-        position: 'relative',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '300px',
-          background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%)',
-          opacity: 0.1,
-          zIndex: 0,
-        }
-      }}>
-        {/* User Profile Button - Moved to top right */}
-        <Box sx={{ 
-          position: 'absolute',
-          top: 20,
-          right: 20,
-          zIndex: 2
-        }}>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={() => navigate('/myprofile', { state: { id: user, pass: pass, ori_id: user} })}
-            startIcon={<AccountCircleIcon sx={{ fontSize: 20 }} />}
-            sx={{
-              background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
-              padding: '6px 16px',
-              borderRadius: '20px',
-              fontSize: '0.875rem',
-              minWidth: 'auto',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #3148C0 0%, #B840B0 100%)',
-                transform: 'translateY(-2px)',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-              },
-              transition: 'all 0.3s ease'
-            }}
-          >
-            {user}
-          </Button>
-        </Box>
+    <div>
+      <Navbar user={user} pass={pass} pid={req} />
+      <Box sx={{ padding: '20px', maxWidth: '1200px', margin: 'auto', marginTop: '60px' }}>
+        <Grid container spacing={4} sx={{ padding: '0 20px' }}>
+          {/* Left Column: Projects Section */}
+          <Grid item xs={12} md={8}>
+            
 
-        <Box sx={{ position: 'relative', zIndex: 1 }}>
-          <Typography variant="h3" sx={{ 
-            textAlign: 'center', 
-            marginBottom: '40px',
-            background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            textShadow: 'none',
-            fontWeight: 800,
-          }}>
-            Dashboard
-          </Typography>
-
-          <Grid container spacing={4}>
-            {/* Search Users Section */}
-            <Grid item xs={12} md={6}>
-              <Paper sx={{ 
-                padding: '25px', 
-                borderRadius: '15px', 
-                boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
-                background: 'linear-gradient(145deg, #ffffff, #f4f4f4)',
-                transition: 'transform 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-5px)'
-                }
-              }}>
-                <Typography variant="h6" sx={{ 
-                  marginBottom: '20px', 
-                  display: 'flex', 
-                  alignItems: 'center',
-                  color: '#4158D0',
-                  fontSize: '1.1rem',
-                  fontWeight: 600
-                }}>
-                  <PersonSearchOutlinedIcon sx={{ marginRight: '10px' }} /> Search Users
-                </Typography>
-                
-                <Box sx={{ 
-                  display: 'flex', 
-                  gap: '8px',
-                  alignItems: 'center'
-                }}>
-                  <TextField
-                    placeholder="Search users..."
-                    value={userSearchTerm}
-                    onChange={(e) => setUserSearchTerm(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleUserSearchResult();
-                      }
-                    }}
-                    InputProps={{
-                      startAdornment: <SearchOutlinedIcon sx={{ color: '#9e9e9e', mr: 1 }} />,
-                    }}
-                    sx={{
-                      flexGrow: 1,
-                      width: 'calc(100% - 60px)',
-                      '& .MuiOutlinedInput-root': {
-                        height: '45px',
-                        borderRadius: '12px',
-                        backgroundColor: '#f5f5f5',
-                        fontSize: '1rem',
-                        '& fieldset': {
-                          borderColor: 'transparent',
-                        },
-                        '&:hover': {
-                          backgroundColor: '#f0f0f0',
+            <Grid container spacing={4}>
+              {/* Search Users Section */}
+              <Grid item xs={12} md={6}>
+                <div className='form-group' style={{ display: 'flex', alignItems: 'center' }}>
+                  <label className='input-label' style={{ flexGrow: 1 }}>
+                    <TextField
+                      fullWidth
+                      placeholder="Search users..."
+                      value={userSearchTerm}
+                      onChange={(e) => setUserSearchTerm(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleUserSearchResult();
+                        }
+                      }}
+                      variant="outlined"
+                      sx={{
+                        borderRadius: '10px',
+                        backgroundColor: '#2c3e50',
+                        color: 'white',
+                        '& .MuiOutlinedInput-root': {
                           '& fieldset': {
-                            borderColor: '#4158D0',
-                          }
+                            borderColor: '#3498db',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: '#2980b9',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#2980b9',
+                          },
+                          '& input': {
+                            color: 'white',
+                          },
                         },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#4158D0',
-                        },
-                      }
-                    }}
-                  />
-                  <Button 
-                    onClick={handleUserSearchResult}
-                    size="small"
-                    sx={{
-                      minWidth: '45px',
-                      width: '45px',
-                      background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
-                      color: 'white',
-                      borderRadius: '6px',
-                      padding: '3px 0',
-                      height: '28px',
-                      fontSize: '0.8rem',
-                      '&:hover': {
-                        background: 'linear-gradient(135deg, #3148C0 0%, #B840B0 100%)',
-                      }
-                    }}
-                  >
-                    Go
-                  </Button>
-                </Box>
+                      }}
+                    />
+                  </label>
+                  <IconButton onClick={handleUserSearchResult} sx={{ marginLeft: '10px', backgroundColor: '#3498db', borderRadius: '50%' }}>
+                    <FaSearch style={{ color: 'white' }} />
+                  </IconButton>
+                </div>
 
                 {/* User Search Results */}
                 {userSearchResult.length > 0 && (
-                  <Box sx={{ 
-                    marginTop: '20px',
-                    maxHeight: '300px',
-                    overflowY: 'auto',
-                    '&::-webkit-scrollbar': {
-                      width: '6px',
-                    },
-                    '&::-webkit-scrollbar-thumb': {
-                      backgroundColor: '#C850C0',
-                      borderRadius: '3px',
-                    }
-                  }}>
+                  <Box sx={{ marginTop: '20px' }}>
                     {userSearchResult.map((account, index) => (
                       <Fade in key={index}>
-                        <Paper
-                          onClick={() => navigate('/profile', { state: { id: userSearchTerm,  ori_id: user } })}
+                        <Box
+                          onClick={() => navigate('/profile', { state: { id: userSearchTerm } })}
                           sx={{
                             cursor: 'pointer',
-                            padding: '12px 16px',
-                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                            borderRadius: '10px',
-                            marginBottom: '8px',
-                            transition: 'all 0.2s ease-in-out',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            '&:hover': { 
-                              transform: 'translateX(5px)',
-                              backgroundColor: 'rgba(65, 88, 208, 0.05)',
-                            }
+                            padding: '15px',
+                            backgroundColor: '#34495e',
+                            borderRadius: '8px',
+                            marginBottom: '10px',
+                            transition: 'transform 0.2s ease-in-out',
+                            '&:hover': { transform: 'scale(1.05)' }
                           }}
                         >
-                          <Box>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-                              {account.user_id}
+                          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#ecf0f1' }}>{account.user_id}</Typography>
+                          {account.Projects && (
+                            <Typography variant="body2" sx={{ color: '#bdc3c7' }}>
+                              Projects: {account.Projects.length}
                             </Typography>
-                            {account.Projects && (
-                              <Typography variant="body2" color="text.secondary">
-                                {account.Projects.length} Projects
-                              </Typography>
-                            )}
-                          </Box>
-                          <Typography 
-                            variant="body2" 
-                            sx={{ 
-                              color: '#4158D0',
-                              fontSize: '0.75rem'
-                            }}
-                          >
-                            View Profile →
-                          </Typography>
-                        </Paper>
+                          )}
+                        </Box>
                       </Fade>
                     ))}
                   </Box>
                 )}
-              </Paper>
-            </Grid>
+              </Grid>
 
-            {/* Search Projects Section */}
-            <Grid item xs={12} md={6}>
-              <Paper sx={{ 
-                padding: '25px', 
-                borderRadius: '15px',
-                boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
-                background: 'linear-gradient(145deg, #ffffff, #f4f4f4)',
-                transition: 'transform 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-5px)'
-                }
-              }}>
-                <Typography variant="h6" sx={{ 
-                  marginBottom: '20px', 
-                  display: 'flex', 
-                  alignItems: 'center',
-                  color: '#4158D0',
-                  fontSize: '1.1rem',
-                  fontWeight: 600
-                }}>
-                  <WorkIcon sx={{ marginRight: '10px' }} /> Search Projects
-                </Typography>
-
-                <Box sx={{ 
-                  display: 'flex', 
-                  gap: '8px',
-                  alignItems: 'center'
-                }}>
-                  <TextField
-                    placeholder="Search projects..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handlegetResult();
-                      }
-                    }}
-                    InputProps={{
-                      startAdornment: <SearchOutlinedIcon sx={{ color: '#9e9e9e', mr: 1 }} />,
-                    }}
-                    sx={{
-                      flexGrow: 1,
-                      width: 'calc(100% - 60px)',
-                      '& .MuiOutlinedInput-root': {
-                        height: '45px',
-                        borderRadius: '12px',
-                        backgroundColor: '#f5f5f5',
-                        fontSize: '1rem',
-                        '& fieldset': {
-                          borderColor: 'transparent',
-                        },
-                        '&:hover': {
-                          backgroundColor: '#f0f0f0',
+              {/* Search Projects Section */}
+              <Grid item xs={12} md={6}>
+                <div className='form-group' style={{ display: 'flex', alignItems: 'center' }}>
+                  <label className='input-label' style={{ flexGrow: 1 }}>
+                    <TextField
+                      fullWidth
+                      placeholder="Search projects..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      variant="outlined"
+                      sx={{
+                        borderRadius: '10px',
+                        backgroundColor: '#2c3e50',
+                        color: 'white',
+                        '& .MuiOutlinedInput-root': {
                           '& fieldset': {
-                            borderColor: '#4158D0',
-                          }
+                            borderColor: '#3498db',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: '#2980b9',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#2980b9',
+                          },
                         },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#4158D0',
-                        },
-                      }
-                    }}
-                  />
-                  <Button 
-                    onClick={handlegetResult}
-                    size="small"
-                    sx={{
-                      minWidth: '45px',
-                      width: '45px',
-                      background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
-                      color: 'white',
-                      borderRadius: '6px',
-                      padding: '3px 0',
-                      height: '28px',
-                      fontSize: '0.8rem',
-                      '&:hover': {
-                        background: 'linear-gradient(135deg, #3148C0 0%, #B840B0 100%)',
-                      }
-                    }}
-                  >
-                    Go
-                  </Button>
-                </Box>
+                      }}
+                    />
+                  </label>
+                  <IconButton onClick={handlegetResult} sx={{ marginLeft: '10px', backgroundColor: '#3498db', borderRadius: '50%' }}>
+                    <FaSearch style={{ color: 'white' }} />
+                  </IconButton>
+                </div>
 
                 {/* Project Search Results */}
                 {searchResult.length > 0 && (
-                  <Box sx={{ 
-                    marginTop: '20px',
-                    maxHeight: '300px',
-                    overflowY: 'auto',
-                    '&::-webkit-scrollbar': {
-                      width: '6px',
-                    },
-                    '&::-webkit-scrollbar-thumb': {
-                      backgroundColor: '#C850C0',
-                      borderRadius: '3px',
-                    }
-                  }}>
+                  <Box sx={{ marginTop: '20px' }}>
                     {searchResult.map((project, index) => (
                       <Fade in key={index}>
-                        <Paper
-                          onClick={() => navigate('/viewproject', { state: { id: userSearchTerm, pid: project.project_id, ori_id: user } })}
+                        <Box
+                          onClick={() => navigate('/viewproject', { state: { id: project._id, ori_id: user } })}
                           sx={{
                             cursor: 'pointer',
-                            padding: '12px 16px',
-                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                            borderRadius: '10px',
-                            marginBottom: '8px',
-                            transition: 'all 0.2s ease-in-out',
-                            '&:hover': { 
-                              transform: 'translateX(5px)',
-                              backgroundColor: 'rgba(65, 88, 208, 0.05)',
-                            }
+                            padding: '15px',
+                            backgroundColor: '#34495e',
+                            borderRadius: '8px',
+                            marginBottom: '10px',
+                            transition: 'transform 0.2s ease-in-out',
+                            '&:hover': { transform: 'scale(1.05)' }
                           }}
                         >
-                          <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-                            {project.project_name}
-                          </Typography>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#ecf0f1' }}>{project.Project_name}</Typography>
                           {project.project_descrp && (
-                            <Typography 
-                              variant="body2" 
-                              color="text.secondary"
-                              sx={{ 
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                display: '-webkit-box',
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: 'vertical',
-                              }}
-                            >
-                              {project.project_descrp}
+                            <Typography variant="body2" sx={{ color: '#bdc3c7' }}>
+                              Description: {project.Project_descrp}
                             </Typography>
                           )}
-                        </Paper>
+                        </Box>
                       </Fade>
                     ))}
                   </Box>
                 )}
-              </Paper>
+              </Grid>
             </Grid>
+
+            {/* Main Section: Recommended Projects */}
+            <Box sx={{ marginBottom: '40px' }}>
+              <RecommendedProjects projects={pro.projects} user={user} pass={pass} />
+            </Box>
           </Grid>
 
-          {/* Ongoing Projects Section */}
-          <Box sx={{ marginTop: '40px' }}>
-            <Typography variant="h5" sx={{ 
-              marginBottom: '25px',
-              color: '#1a237e',
-              fontWeight: 600,
-              background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              display: 'inline-block',
-              position: 'relative',
-              '&::after': {
-                content: '""',
-                position: 'absolute',
-                bottom: '-8px',
-                left: 0,
-                width: '100%',
-                height: '3px',
-                background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
-                borderRadius: '2px',
-                transform: 'scaleX(0)',
-                transition: 'transform 0.3s ease',
-              },
-              '&:hover::after': {
-                transform: 'scaleX(1)',
-              }
-            }}>
-              Ongoing Projects
-            </Typography>
-            
-            <Grid container spacing={3}>
-              {auth.projects && auth.projects.length > 0 ? (
-                auth.projects.map((project, index) => (
-                  <Grid item xs={12} md={4} key={index}>
-                    <Fade in timeout={500} style={{ transitionDelay: `${index * 100}ms` }}>
-                      <Paper
-                        elevation={0}
-                        sx={{
-                          padding: '25px',
-                          borderRadius: '20px',
-                          background: 'rgba(255, 255, 255, 0.9)',
-                          backdropFilter: 'blur(10px)',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
-                          position: 'relative',
-                          overflow: 'hidden',
-                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                          '&::before': {
-                            content: '""',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            background: 'linear-gradient(135deg, rgba(65, 88, 208, 0.1) 0%, rgba(200, 80, 192, 0.1) 100%)',
-                            opacity: 0,
-                            transition: 'opacity 0.3s ease',
-                          },
-                          '&:hover': { 
-                            transform: 'translateY(-8px)',
-                            boxShadow: '0 12px 20px rgba(0, 0, 0, 0.15)',
-                            '&::before': {
-                              opacity: 1,
-                            }
-                          }
-                        }}
-                      >
-                        <Box sx={{ position: 'relative' }}>
-                          <Typography 
-                            variant="h6" 
-                            sx={{ 
-                              color: '#1a237e',
-                              marginBottom: '15px',
-                              fontWeight: 600,
-                              fontSize: '1.1rem',
-                              position: 'relative',
-                              '&::after': {
-                                content: '""',
-                                position: 'absolute',
-                                bottom: '-5px',
-                                left: 0,
-                                width: '40px',
-                                height: '2px',
-                                background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
-                                transition: 'width 0.3s ease',
-                              }
-                            }}
-                          >
-                            {project.Project_name}
-                          </Typography>
-
-                          <Button
-                            variant="contained"
-                            onClick={() => navigate('/project', { state: { pexp: project._id, id: user, pass: pass } })}
-                            sx={{
-                              mt: 2,
-                              background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
-                              borderRadius: '12px',
-                              padding: '8px 20px',
-                              fontSize: '0.875rem',
-                              textTransform: 'none',
-                              transition: 'all 0.3s ease',
-                              position: 'relative',
-                              overflow: 'hidden',
-                              '&::before': {
-                                content: '""',
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                width: '100%',
-                                height: '100%',
-                                background: 'linear-gradient(135deg, #3148C0 0%, #B840B0 100%)',
-                                opacity: 0,
-                                transition: 'opacity 0.3s ease',
-                              },
-                              '&:hover': {
-                                transform: 'translateY(-2px)',
-                                boxShadow: '0 5px 15px rgba(65, 88, 208, 0.3)',
-                                '&::before': {
-                                  opacity: 1,
-                                }
-                              },
-                              '& .MuiButton-label': {
-                                position: 'relative',
-                                zIndex: 1,
-                              }
-                            }}
-                          >
-                            View Project
-                          </Button>
-                        </Box>
-                      </Paper>
-                    </Fade>
-                  </Grid>
-                ))
-              ) : (
-                <Grid item xs={12}>
-                  <Fade in>
-                    <Paper
-                      sx={{
-                        padding: '30px',
-                        textAlign: 'center',
-                        background: 'rgba(255, 255, 255, 0.9)',
-                        borderRadius: '20px',
-                        backdropFilter: 'blur(10px)',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
-                      }}
-                    >
-                      <Typography 
-                        variant="body1" 
-                        sx={{ 
-                          color: '#666',
-                          fontSize: '1rem',
-                          fontStyle: 'italic',
-                          background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                        }}
-                      >
+          <Grid item xs={12} md={4}>
+            <Box sx={{ marginTop: '40px', textAlign: 'left' }}>
+              <section id="projects" className="projects-section">
+                <div className="projects-container">
+                  <h2 className="projects-title">Your Projects</h2>
+                  <div className="projects-grid">
+                    {auth.projects && auth.projects.length > 0 ? (
+                      auth.projects.map((project, index) => (
+                        <div variant="contained"
+                        onClick={() => navigate('/project', { state: { pexp: project._id, id: user, pass: pass, proname: project.Project_name } })} key={index} className='project-card' style={{ width: '100%', maxWidth: '250px', height: '200px', margin: '10px auto' }}>
+                          <div className="project-image-container" style={{ height: '60%' }}>
+                            <img 
+                              src={proimg}
+                              alt={project.Project_name} 
+                              className="project-image"
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                            <div className="project-links">
+                              <a 
+                                href={project.Project_URL} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="project-link"
+                              >
+                                Code
+                              </a>
+                            </div>
+                          </div>
+                          <div className="project-content" style={{ height: '40%', overflow: 'hidden' }}>
+                            <h3 className="project-title" style={{ fontSize: '1rem' }}>{project.Project_name}</h3>
+                            {/* <p className="project-description" style={{ fontSize: '0.875rem' }}>{project.Project_descrp}</p> */}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <Typography variant="body1" sx={{ marginLeft: '15px' }}>
                         No projects found
                       </Typography>
-                    </Paper>
-                  </Fade>
-                </Grid>
-              )}
-            </Grid>
-          </Box>
+                    )}
+                  </div>
+                </div>
+              </section>
+            </Box>
+          </Grid>
+        </Grid>
 
-          {/* Create New Project Button */}
-          <Box sx={{ position: 'fixed', bottom: 30, right: 30 }}>
-            <IconButton
-              color="primary"
-              size="large"
-              onClick={() => navigate('/new-project', { state: { user: user, pwd: pass } })}
-              sx={{
-                backgroundColor: '#3f51b5',
-                color: '#fff',
-                padding: '15px',
-                boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
-                '&:hover': { 
-                  backgroundColor: '#303f9f',
-                  transform: 'scale(1.1) rotate(180deg)'
-                },
-                transition: 'all 0.3s ease'
-              }}
-            >
-              <AddCircleIcon sx={{ fontSize: 60 }} />
-            </IconButton>
-          </Box>
+        {/* Create New Project Button */}
+        <Box sx={{ position: 'fixed', bottom: 30, right: 30 }}>
+          <IconButton
+            color="primary"
+            size="large"
+            onClick={() => navigate('/new-project', { state: { user: user, pwd: pass } })}
+            sx={{
+              backgroundColor: '#3f51b5',
+              color: '#fff',
+              '&:hover': { backgroundColor: '#3f51b5' },
+              transition: 'transform 0.2s ease-in-out',
+              '&:hover': { transform: 'scale(1.1)' }
+            }}
+          >
+            <FaDrawPolygon sx={{ fontSize: 60 }} />
+          </IconButton>
         </Box>
       </Box>
-    </ThemeProvider>
+    </div>
   );
 };
 

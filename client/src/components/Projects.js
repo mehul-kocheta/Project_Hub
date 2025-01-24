@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Box, Typography, Checkbox, FormControlLabel, LinearProgress, Button, TextField, Card, CardContent, Chip, Grid, Paper, Fade, Avatar } from '@mui/material';
+import { Box, Typography, Checkbox, FormControlLabel, LinearProgress, Button, TextField, Card, CardContent, Chip, Grid, Paper, Fade, IconButton, Tooltip } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import AddIcon from '@mui/icons-material/Add';
-import PersonIcon from '@mui/icons-material/Person';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import AddTaskIcon from '@mui/icons-material/AddTask';
-import GitHubIcon from '@mui/icons-material/GitHub';
-import AssignmentIcon from '@mui/icons-material/Assignment';
-import '../App.css'; // Ensure the CSS is adjusted to support animations
+import { FaComment, FaComments, FaProjectDiagram, FaGithub, FaUser, FaMeetup, FaCamera, FaTimes } from 'react-icons/fa';
+import { RiUserAddLine } from "react-icons/ri";
+import { SiChatbot } from "react-icons/si";
+import { MdOutlineAddTask } from "react-icons/md";
+import { MdDateRange } from "react-icons/md";
+import { RiAdminFill } from "react-icons/ri";
+import { MdVisibility } from "react-icons/md";
+import '../App.css';
+import LLM from './Llm';
+import Chat from './Chat';
+import Navbar from './Navbar';
 
 const Projects = () => {
   const [tasks, setTasks] = useState([]);
@@ -18,16 +21,23 @@ const Projects = () => {
   const [newCollaborator, setNewCollaborator] = useState('');
   const [showMore, setShowMore] = useState(false);
   const [pendingRequests, setPendingRequests] = useState([]);
+  const [deadline, setDeadline] = useState('');
   const [git, setGit] = useState('');
   const location = useLocation();
   const index = location.state?.pexp;
   const uid = location.state?.id;
   const pwd = location.state?.pass;
+  console.log(uid, index, pwd);
+  const proname = location.state?.proname;
   const completedTasks = tasks.filter((task) => task.completed).length;
   const totalTasks = tasks.length;
   const progress = (completedTasks / totalTasks) * 100;
   const visibleCollaborators = showMore ? collaborators : collaborators.slice(0, 4);
   const navigate = useNavigate();
+  const [showLLM, setShowLLM] = useState(false); 
+  const [isHovered, setIsHovered] = useState(false); 
+  const [isHoveredMeet, setIsHoveredMeet] = useState(false);
+  const [isHoveredllm , setIsHoveredllm ] = useState(false);
 
   useEffect(() => {
     fetch("/api/get_features", {
@@ -103,8 +113,9 @@ const Projects = () => {
       .then((response) => response.json())
       .then((data) => {
         if (data && data.project.Requests) {
-          console.log(data.project.Requests);
+          console.log(data.project);
           setPendingRequests(data.project.Requests);
+          setDeadline(data.prject.Deadline);
         }
       })
       .catch((error) => console.error("Fetch error:", error));
@@ -187,433 +198,523 @@ const Projects = () => {
     }
   };
 
+  const handleToggleLLM = () => {
+    setShowLLM((prev) => !prev); // Toggle the visibility of LLM
+  };
+
+  const handleMeet = () => {
+    fetch('/api/create_meeting', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        project_id: index,
+      })
+    })
+
+  }
   return (
-    <Box sx={{ 
-      padding: '30px',
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #f6f9fc 0%, #eef2f7 100%)',
-      position: 'relative',
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '300px',
-        background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%)',
-        opacity: 0.1,
-        zIndex: 0,
-      }
-    }}>
-      {/* Header Section */}
-      <Box sx={{ 
-        position: 'relative',
-        zIndex: 1,
-        mb: 4
-      }}>
-        <Typography variant="h3" sx={{ 
-          textAlign: 'center',
-          background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          fontWeight: 800,
-          mb: 3
+    <div>
+    <Navbar  />
+    <Box sx={{ display: 'flex', flexDirection: 'row', height: '100vh', marginTop: '3%' }}>
+      <Box sx={{ flexGrow: 1, padding: 2 }}>
+        <Box sx={{ 
+          position: 'relative',
+          zIndex: 1,
+          mb: 4
         }}>
-          Project Dashboard
-        </Typography>
-      </Box>
-
-      <Grid container spacing={4}>
-        {/* Collaborators Section */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ 
-            padding: '25px',
-            borderRadius: '20px',
-            background: 'rgba(255, 255, 255, 0.9)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
-            transition: 'transform 0.3s ease',
-            '&:hover': {
-              transform: 'translateY(-5px)',
-            }
-          }}>
-            <Typography variant="h6" sx={{ 
-              display: 'flex',
-              alignItems: 'center',
-              color: '#4158D0',
-              fontWeight: 600,
-              mb: 3
-            }}>
-              <PersonIcon sx={{ mr: 1 }} /> Collaborators
-            </Typography>
-
-            <Box sx={{ 
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 2,
-              mb: 3
-            }}>
-              {collaborators.map((collaborator, index) => (
-                <Fade in key={index} timeout={500} style={{ transitionDelay: `${index * 100}ms` }}>
-                  <Box sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '8px 16px',
-                    borderRadius: '12px',
-                    background: 'linear-gradient(135deg, rgba(65, 88, 208, 0.1) 0%, rgba(200, 80, 192, 0.1) 100%)',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-                    }
-                  }}>
-                    <PersonIcon sx={{ color: '#4158D0', mr: 1 }} />
-                    <Typography>{collaborator}</Typography>
-                  </Box>
-                </Fade>
-              ))}
-            </Box>
-
-            <Box sx={{ mt: 2 }}>
-              <TextField
-                fullWidth
-                placeholder="Add new collaborator..."
-                value={newCollaborator}
-                onChange={(e) => setNewCollaborator(e.target.value)}
-                InputProps={{
-                  startAdornment: <PersonAddIcon sx={{ color: '#9e9e9e', mr: 1 }} />,
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    height: '45px',
-                    borderRadius: '12px',
-                    backgroundColor: '#f5f5f5',
-                    '& fieldset': {
-                      borderColor: 'transparent',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: '#4158D0',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#4158D0',
-                    }
-                  }
-                }}
-              />
-              <Button
-                onClick={handleAddCollaborator}
-                sx={{
-                  mt: 2,
-                  background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
-                  borderRadius: '12px',
-                  padding: '8px 20px',
-                  color: 'white',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #3148C0 0%, #B840B0 100%)',
-                  }
-                }}
-              >
-                Add Collaborator
-              </Button>
-            </Box>
-          </Paper>
-        </Grid>
-
-        {/* Tasks Section */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ 
-            padding: '25px',
-            borderRadius: '20px',
-            background: 'rgba(255, 255, 255, 0.9)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
-            transition: 'transform 0.3s ease',
-            '&:hover': {
-              transform: 'translateY(-5px)',
-            }
-          }}>
-            <Typography variant="h6" sx={{ 
-              display: 'flex',
-              alignItems: 'center',
-              color: '#4158D0',
-              fontWeight: 600,
-              mb: 3
-            }}>
-              <AssignmentIcon sx={{ mr: 1 }} /> Tasks
-            </Typography>
-
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>Progress</Typography>
-              <LinearProgress
-                variant="determinate"
-                value={progress}
-                sx={{
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: 'rgba(65, 88, 208, 0.1)',
-                  '& .MuiLinearProgress-bar': {
-                    background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
-                    borderRadius: 4,
-                  }
-                }}
-              />
-              <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
-                {completedTasks} of {totalTasks} tasks completed
-              </Typography>
-            </Box>
-
-            <Box sx={{ 
-              maxHeight: '300px',
-              overflowY: 'auto',
-              '&::-webkit-scrollbar': {
-                width: '6px',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                backgroundColor: '#C850C0',
-                borderRadius: '3px',
-              }
-            }}>
-              {tasks.map((task, index) => (
-                <Fade in key={index} timeout={500} style={{ transitionDelay: `${index * 50}ms` }}>
-                  <Box sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '8px',
-                    borderRadius: '12px',
-                    mb: 1,
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      backgroundColor: 'rgba(65, 88, 208, 0.05)',
-                    }
-                  }}>
-                    <Checkbox
-                      checked={task.completed}
-                      onChange={() => handleTaskChange(task.featureKey)}
-                      icon={<CheckCircleIcon />}
-                      checkedIcon={<CheckCircleIcon sx={{ color: '#4caf50' }} />}
-                    />
-                    <Typography>{task.featureKey}</Typography>
-                  </Box>
-                </Fade>
-              ))}
-            </Box>
-
-            <Box sx={{ mt: 3 }}>
-              <TextField
-                fullWidth
-                placeholder="Add new task..."
-                value={newTask}
-                onChange={(e) => setNewTask(e.target.value)}
-                InputProps={{
-                  startAdornment: <AddTaskIcon sx={{ color: '#9e9e9e', mr: 1 }} />,
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    height: '45px',
-                    borderRadius: '12px',
-                    backgroundColor: '#f5f5f5',
-                    '& fieldset': {
-                      borderColor: 'transparent',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: '#4158D0',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#4158D0',
-                    }
-                  }
-                }}
-              />
-              <Button
-                onClick={handleAddTask}
-                sx={{
-                  mt: 2,
-                  background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
-                  borderRadius: '12px',
-                  padding: '8px 20px',
-                  color: 'white',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #3148C0 0%, #B840B0 100%)',
-                  }
-                }}
-              >
-                Add Task
-              </Button>
-            </Box>
-          </Paper>
-        </Grid>
-
-        {/* Pending Requests Section */}
-        <Grid item xs={12}>
-          <Typography variant="h5" sx={{ 
-            marginBottom: '25px',
-            fontWeight: 600,
+          <Typography variant="h3" sx={{ 
+            textAlign: 'center',
             background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
-            display: 'inline-block',
+            fontWeight: 800,
+            mb: 3
           }}>
-            Pending Requests
+            {proname}
           </Typography>
-          
-          <Grid container spacing={3}>
-            {pendingRequests && pendingRequests.length > 0 ? (
-              pendingRequests.map((request, index) => (
-                <Grid item xs={12} sm={6} key={index}>
-                  <Paper
-                    elevation={0}
-                    sx={{
-                      padding: '20px',
-                      borderRadius: '20px',
-                      background: 'rgba(255, 255, 255, 0.9)',
-                      backdropFilter: 'blur(10px)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        </Box>
+
+        <Grid container spacing={4}>
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ 
+              padding: '25px',
+              borderRadius: '20px',
+              background: 'linear-gradient(to bottom, #1e293b, #0f172a)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+              transition: 'transform 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-5px)',
+              }
+            }}>
+              <Typography variant="h6" sx={{ 
+                display: 'flex',
+                alignItems: 'center',
+                color: '#4158D0',
+                fontWeight: 600,
+                mb: 3
+              }}>
+                Collaborators
+              </Typography>
+
+              <Box sx={{ 
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 2,
+                mb: 3
+              }}>
+                {collaborators.map((collaborator, index) => (
+                  <Fade in key={index} timeout={500} style={{ transitionDelay: `${index * 100}ms` }}>
+                    <Box sx={{
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between',
-                      '&:hover': { 
-                        transform: 'translateY(-5px)',
-                        boxShadow: '0 12px 20px rgba(0, 0, 0, 0.15)',
+                      padding: '8px 16px',
+                      borderRadius: '12px',
+                      color: 'white',
+                      background: 'linear-gradient(135deg, rgba(65, 88, 208, 0.1) 0%, rgba(200, 80, 192, 0.1) 100%)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
                       }
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Avatar 
-                        sx={{ 
-                          background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
-                        }}
-                      >
-                        <PersonIcon />
-                      </Avatar>
-                      <Typography variant="h6" sx={{ fontWeight: 500 }}>
-                        {request}
-                        {/* {console.log(request)} */}
-                      </Typography>
+                    }}>
+                      <Typography>{collaborator}</Typography>
                     </Box>
-                    <Button
-                      variant="contained"
-                      onClick={() => acceptRequest(request)}
+                  </Fade>
+                ))}
+              </Box>
+
+              <Box sx={{ mt: 2 }}>
+                <TextField
+                  fullWidth
+                  placeholder="Add new collaborator..."
+                  value={newCollaborator}
+                  onChange={(e) => setNewCollaborator(e.target.value)}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: '45px',
+                      borderRadius: '12px',
+                      backgroundColor: '#f5f5f5',
+                      '& fieldset': {
+                        border: 'none',
+                      },
+                     
+                    }
+                  }}
+                />
+                <Button
+                  onClick={handleAddCollaborator}
+                  sx={{
+                    mt: 2,
+                    background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
+                    borderRadius: '12px',
+                    padding: '8px 20px',
+                    color: 'white',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #3148C0 0%, #B840B0 100%)',
+                    }
+                  }}
+                >
+                  <RiUserAddLine />Add Collaborator
+                </Button>
+              </Box>
+            </Paper>
+          </Grid>
+
+          <Grid>
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ 
+              padding: '25px',
+              borderRadius: '20px',
+              background: 'linear-gradient(to bottom, #1e293b, #0f172a)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+              transition: 'transform 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-5px)',
+              }
+            }}>
+              <Typography variant="h6" sx={{ 
+                display: 'flex',
+                alignItems: 'center',
+                color: '#4158D0',
+                fontWeight: 600,
+                mb: 3
+              }}>
+                Deadline
+              </Typography>
+              <Typography><FaTimes size={24}/> {deadline}</Typography>
+            </Paper>
+            </Grid>
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ 
+              padding: '25px',
+              borderRadius: '20px',
+              color: 'white',
+              background: 'linear-gradient(to bottom, #1e293b, #0f172a)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+              transition: 'transform 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-5px)',
+              }
+            }}>
+              <Typography variant="h6" sx={{ 
+                display: 'flex',
+                alignItems: 'center',
+                color: '#4158D0',
+                fontWeight: 600,
+                mb: 3
+              }}>
+                Tasks
+              </Typography>
+
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle1" sx={{ mb: 1 }}>Progress</Typography>
+                <LinearProgress
+                  variant="determinate"
+                  value={progress}
+                  sx={{
+                    height: 8,
+                    borderRadius: 4,
+                    color: 'white',
+                    backgroundColor: 'rgba(65, 88, 208, 0.1)',
+                    '& .MuiLinearProgress-bar': {
+                      background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
+                      borderRadius: 4,
+                    }
+                  }}
+                />
+                <Typography variant="body2" sx={{ mt: 1, color: 'white' }}>
+                  {completedTasks} of {totalTasks} tasks completed
+                </Typography>
+              </Box>
+
+              <Box sx={{ 
+                maxHeight: '300px',
+                overflowY: 'auto',
+                '&::-webkit-scrollbar': {
+                  width: '6px',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  backgroundColor: '#C850C0',
+                  borderRadius: '3px',
+                }
+              }}>
+                {tasks.map((task, index) => (
+                  <Fade in key={index} timeout={500} style={{ transitionDelay: `${index * 50}ms` }}>
+                    <Box sx={{
+                      display: 'flex',
+                      color: 'white',
+                      alignItems: 'center',
+                      padding: '8px',
+                      borderRadius: '12px',
+                      mb: 1,
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        backgroundColor: 'rgba(65, 88, 208, 0.05)',
+                      }
+                    }}>
+                      <Checkbox style={{color: 'white'}}
+                        checked={task.completed}
+                        onChange={() => handleTaskChange(task.featureKey)}
+                      />
+                      <Typography>{task.featureKey}</Typography>
+                    </Box>
+                  </Fade>
+                ))}
+              </Box>
+
+              <Box sx={{ mt: 3 }}>
+                <TextField
+                  fullWidth
+                  placeholder="Add new task..."
+                  value={newTask}
+                  onChange={(e) => setNewTask(e.target.value)}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: '45px',
+                      borderRadius: '12px',
+                      backgroundColor: '#f5f5f5',
+                      '& fieldset': {
+                        border: 'none'
+                        // borderColor: 'transparent',
+                      },
+                      // '&:hover fieldset': {
+                      //   borderColor: '#4158D0',
+                      // },
+                      // '&.Mui-focused fieldset': {
+                      //   borderColor: '#4158D0',
+                      // }
+                    }
+                  }}
+                />
+                <Button
+                  onClick={handleAddTask}
+                  sx={{
+                    mt: 2,
+                    background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
+                    borderRadius: '12px',
+                    padding: '8px 20px',
+                    color: 'white',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #3148C0 0%, #B840B0 100%)',
+                    }
+                  }}
+                >
+                  <MdOutlineAddTask /> Add Task
+                </Button>
+              </Box>
+            </Paper>
+          </Grid>
+
+          <Grid item xs={12}>
+            <Typography variant="h5" sx={{ 
+              marginBottom: '25px',
+              fontWeight: 600,
+              background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              display: 'inline-block',
+            }}>
+              Pending Requests
+            </Typography>
+            
+            <Grid container spacing={3}>
+              {pendingRequests && pendingRequests.length > 0 ? (
+                pendingRequests.map((request, index) => (
+                  <Grid item xs={12} sm={6} key={index}>
+                    <Paper
+                      elevation={0}
                       sx={{
-                        background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
-                        borderRadius: '12px',
-                        padding: '8px 20px',
-                        '&:hover': {
-                          background: 'linear-gradient(135deg, #3148C0 0%, #B840B0 100%)',
-                          transform: 'translateY(-2px)',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                        },
-                        transition: 'all 0.3s ease'
+                        padding: '20px',
+                        borderRadius: '20px',
+                        background: 'linear-gradient(to bottom, #1e293b, #0f172a)',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        '&:hover': { 
+                          transform: 'translateY(-5px)',
+                          boxShadow: '0 12px 20px rgba(0, 0, 0, 0.15)',
+                        }
                       }}
                     >
-                      Accept
-                    </Button>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 500 }}>
+                          {request}
+                        </Typography>
+                      </Box>
+                      <Button
+                        variant="contained"
+                        onClick={() => acceptRequest(request)}
+                        sx={{
+                          background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
+                          borderRadius: '12px',
+                          padding: '8px 20px',
+                          '&:hover': {
+                            background: 'linear-gradient(135deg, #3148C0 0%, #B840B0 100%)',
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                          },
+                          transition: 'all 0.3s ease'
+                        }}
+                      >
+                        Accept
+                      </Button>
+                    </Paper>
+                  </Grid>
+                ))
+              ) : (
+                <Grid item xs={12}>
+                  <Paper sx={{
+                    padding: '30px',
+                    textAlign: 'center',
+                    background: 'linear-gradient(to bottom, #1e293b, #0f172a)',
+                    borderRadius: '20px',
+                  }}>
+                    <Typography variant="body1" sx={{ 
+                      color: '#666',
+                      background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                    }}>
+                      No pending requests
+                    </Typography>
                   </Paper>
                 </Grid>
-              ))
-            ) : (
-              <Grid item xs={12}>
-                <Paper sx={{
-                  padding: '30px',
-                  textAlign: 'center',
-                  background: 'rgba(255, 255, 255, 0.9)',
-                  borderRadius: '20px',
-                }}>
-                  <Typography variant="body1" sx={{ 
-                    color: '#666',
-                    background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                  }}>
-                    No pending requests
-                  </Typography>
-                </Paper>
-              </Grid>
-            )}
+              )}
+            </Grid>
+          </Grid>
+
+          <Grid item xs={12}>
+            <Paper sx={{ 
+              padding: '25px',
+              borderRadius: '20px',
+              background: 'rgba(65, 88, 208, 0.05)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+            }}>
+              <Typography variant="h6" sx={{ 
+                display: 'flex',
+                alignItems: 'center',
+                background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                fontWeight: 600,
+                mb: 3,
+              }}>
+               GitHub Repository
+              </Typography>
+
+              {git ? (
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={6}>
+                    <Box sx={{
+                      p: 2,
+                      borderRadius: '12px',
+                      color: 'white',
+                      background: 'rgba(65, 88, 208, 0.05)',
+                    }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                        Repository Details
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        <strong><FaProjectDiagram/> Project Name:</strong> {git["Project name"]}
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        <strong><RiAdminFill /> Owner:</strong> {git["Project owner"]}
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        <strong><MdDateRange /> Last Release:</strong> {git["Last release"]}
+                      </Typography>
+                      <Typography variant="body2">
+                        <strong><MdVisibility /> Visibility:</strong> {git["Security/visibility level"]}
+                      </Typography>
+                    </Box>
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <Box sx={{
+                      p: 2,
+                      color: 'white',
+                      borderRadius: '12px',
+                      background: 'rgba(65, 88, 208, 0.05)',
+                    }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                        Languages Used
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {git["Programming languages used"].map((lang, index) => (
+                          <Chip
+                            key={index}
+                            label={lang}
+                            sx={{
+                              background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
+                              color: 'white',
+                            }}
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+                  </Grid>
+                </Grid>
+              ) : (
+                <Typography sx={{ textAlign: 'center', color: 'text.secondary' }}>
+                  Loading GitHub information...
+                </Typography>
+              )}
+            </Paper>
           </Grid>
         </Grid>
 
-        {/* GitHub Info Section */}
-        <Grid item xs={12}>
-          <Paper sx={{ 
-            padding: '25px',
+        <Tooltip title={showLLM ? 'Hide LLM' : 'Show LLM'}>
+          <Button
+            variant='contained'
+            onMouseEnter={() => setIsHoveredllm(true)}
+            onMouseLeave={() => setIsHoveredllm(false)}
+            onClick={handleToggleLLM}
+            sx={{
+              position: 'fixed',
+              bottom: 80,
+              right: 30,
+              background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
+              color: 'white',
+              width: 56,
+              height: 56,
+              width: isHoveredllm ? '120px' : '50px',
+              justifyContent: isHoveredllm ? 'space-between' : 'center',
+              borderRadius: '30px',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+              marginBottom: 1,
+            }}
+          >
+            <SiChatbot size={24} />
+            {isHoveredllm && <span style={{ marginLeft: '8px' }}>Fixie</span>}
+          </Button>
+        </Tooltip>
+      </Box>
+
+      {showLLM && (
+        <Box sx={{ width: '750px', borderLeft: '1px solid #ccc', padding: 2}}>
+          <LLM pid={index} />
+
+        </Box>
+      )}
+      <Box sx={{ position: 'fixed', bottom: 30, right: 30 }}>
+        <Button
+          variant="contained"
+          onClick={() => navigate('/chat', {state:{index: index, user: uid, pwd: pwd}})}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            background: 'linear-gradient(135deg, #3148C0 0%, #B840B0 100%)',
+            justifyContent: isHovered ? 'space-between' : 'center',
+            padding: '10px 20px',
+            transition: 'width 0.3s, padding 0.3s',
+            width: isHovered ? '120px' : '50px',
             borderRadius: '20px',
-            background: 'rgba(255, 255, 255, 0.9)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
-          }}>
-            <Typography variant="h6" sx={{ 
-              display: 'flex',
-              alignItems: 'center',
-              color: '#4158D0',
-              fontWeight: 600,
-              mb: 3
-            }}>
-              <GitHubIcon sx={{ mr: 1 }} /> GitHub Repository
-            </Typography>
-
-            {git ? (
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                  <Box sx={{
-                    p: 2,
-                    borderRadius: '12px',
-                    background: 'rgba(65, 88, 208, 0.05)',
-                  }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-                      Repository Details
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                      <strong>Project Name:</strong> {git["Project name"]}
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                      <strong>Owner:</strong> {git["Project owner"]}
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                      <strong>Last Release:</strong> {git["Last release"]}
-                    </Typography>
-                    <Typography variant="body2">
-                      <strong>Visibility:</strong> {git["Security/visibility level"]}
-                    </Typography>
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <Box sx={{
-                    p: 2,
-                    borderRadius: '12px',
-                    background: 'rgba(65, 88, 208, 0.05)',
-                  }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-                      Languages Used
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {git["Programming languages used"].map((lang, index) => (
-                        <Chip
-                          key={index}
-                          label={lang}
-                          sx={{
-                            background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
-                            color: 'white',
-                          }}
-                        />
-                      ))}
-                    </Box>
-                  </Box>
-                </Grid>
-              </Grid>
-            ) : (
-              <Typography sx={{ textAlign: 'center', color: 'text.secondary' }}>
-                Loading GitHub information...
-              </Typography>
-            )}
-          </Paper>
-        </Grid>
-      </Grid>
+          }}
+        >
+          <FaComment size={24} />
+          {isHovered && <span style={{ marginLeft: '8px' }}>Chat</span>}
+        </Button>
+      </Box>
+      <Box sx={{ position: 'fixed', bottom: 160, right: 30 }}>
+        <a href='www.gmail.com'><Button
+          variant="contained"
+          onClick={handleMeet}
+          onMouseEnter={() => setIsHoveredMeet(true)}
+          onMouseLeave={() => setIsHoveredMeet(false)}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            background: 'linear-gradient(135deg, #3148C0 0%, #B840B0 100%)',
+            justifyContent: isHoveredMeet ? 'space-between' : 'center',
+            padding: '10px 20px',
+            transition: 'width 0.3s, padding 0.3s',
+            width: isHoveredMeet ? '120px' : '50px',
+            borderRadius: '20px',
+          }}
+        >
+          <FaCamera size={24} />
+          {isHoveredMeet && <span style={{ marginLeft: '8px' }}>Meet</span>}
+        </Button></a>
+      </Box>
     </Box>
+    </div>
   );
 };
 

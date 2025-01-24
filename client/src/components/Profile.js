@@ -1,218 +1,273 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, Avatar, Grid, Card, CardContent, Box, Paper, Fade } from '@mui/material';
+import { Container, Typography, Avatar, Grid, Card, CardContent, List, ListItem, ListItemAvatar, ListItemText, Box } from '@mui/material';
+import { Email, Phone } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { FaGithub, FaLinkedin, FaEnvelope, FaPhone, 
+  FaMapMarkerAlt, FaDownload, FaUserGraduate, FaEye,
+  FaUniversity, FaCode, FaBookReader } from 'react-icons/fa';
+import '../App.css';
+import Navbar from './Navbar';
 
 const UserProfile = () => {
+  // useEffect(() => {
+  //   const observer = new IntersectionObserver(
+  //     (entries) => {
+  //       entries.forEach(entry => {
+  //         if (entry.isIntersecting) {
+  //           entry.target.classList.add('animate-in');
+  //         }
+  //       });
+  //     },
+  //     { threshold: 0.1 }
+  //   );
+
+  //   document.querySelectorAll('.project-card').forEach((el) => observer.observe(el));
+  //   return () => observer.disconnect();
+  // }, []);
   const location = useLocation();
   const user = location.state?.id;
+  const pid = location.state?.pid;
   const ori_id = location.state?.ori_id;
+  console.log(user);
   const [userData, setUserData] = useState(null);
   const navigate = useNavigate();
-
   useEffect(() => {
-    fetch("/api/get_account", {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        user_id: user,
+      fetch("/api/get_account", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: user,
+        })
       })
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        return response.json();
-      })
-      .then((data) => {
-        setUserData(data);
-      })
-      .catch((error) => console.error("Fetch error:", error));
-  }, []);
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          console.log(data);
+          setUserData(data);  // Store fetched data in auth
+        })
+        .catch((error) => console.error("Fetch error:", error));
+    }, []);
 
   if (!userData) {
-    return (
-      <Box sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
-      }}>
-        <Typography variant="h5" sx={{ color: '#fff' }}>Loading...</Typography>
-      </Box>
-    );
+    return <Typography>Loading...</Typography>;
   }
 
   return (
-    <Box sx={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #f6f9fc 0%, #f0f4f8 100%)',
-      padding: '2rem',
-    }}>
-      <Container maxWidth="lg">
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Paper sx={{
-              p: 4,
-              borderRadius: '20px',
-              background: 'rgba(255, 255, 255, 0.9)',
-              backdropFilter: 'blur(10px)',
-              boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
-            }}>
-              <Box display="flex" alignItems="center" gap={3}>
-                <Avatar 
-                  alt={userData.data.user_id} 
-                  sx={{ 
-                    width: 100, 
-                    height: 100,
-                    background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
-                  }} 
-                />
-                <Box>
-                  <Typography variant="h4" sx={{ 
-                    fontWeight: 600,
-                    background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                  }}>
-                    {userData.data.user_id}
-                  </Typography>
-                </Box>
-              </Box>
-            </Paper>
-          </Grid>
+  <Container>
+    <Navbar />
+    <section id="info" className="info-section">
+      <div className="info-container">
+        <div className="info-left animate">
+          <div className="profile-image-container">
+            <img 
+              src='{Pic}'
+              alt={userData.data.user_id}
+              className="profile-image"
+            />
+            {console.log(userData.data.user_id)}
+            {/* <div className="profile-image-overlay">
+              <span>Full Stack Developer</span>
+            </div> */}
+          </div>
+          <div className="quick-info">
+            {/* <div className="quick-info-item">
+              <FaMapMarkerAlt className="quick-info-icon" />
+              <span></span>
+            </div> */}
+            
+            <div className="education-info">
+              <div className="education-item">
+                <FaUserGraduate className="quick-info-icon" />
+                <div className="education-details">
+                  <span className="degree">{userData.data.Degree}</span>
+                  {/* <span className="year">2022 - 2026</span> */}
+                </div>
+              </div>
+              <div className="education-item">
+                <FaUniversity className="quick-info-icon" />
+                <div className="education-details">
+                  <span className="college">{userData.data.College_name}</span>
+                </div>
+              </div>
 
-          <Grid item xs={12}>
-            <Typography variant="h5" sx={{ 
-              mb: 2,
-              fontWeight: 600,
-              color: '#1a237e'
-            }}>
-              Projects
-            </Typography>
-            <Grid container spacing={2}>
-              {userData.data.Projects && userData.data.Projects.length > 0 ? (
-                userData.data.Projects.map((projectId) => {
-                  const project = userData.projects.find((proj) => proj._id === projectId);
-                  return (
-                    <Grid item xs={12} sm={6} md={4} key={projectId}>
-                      <Fade in timeout={500}>
-                        <Card 
-                          onClick={() => navigate('/viewproject', { state: { pid: projectId, ori_id: ori_id } })}
-                          sx={{
-                            cursor: 'pointer',
-                            borderRadius: '16px',
-                            background: 'rgba(255, 255, 255, 0.9)',
-                            backdropFilter: 'blur(10px)',
-                            transition: 'all 0.3s ease',
-                            '&:hover': {
-                              transform: 'translateY(-5px)',
-                              boxShadow: '0 12px 20px rgba(65, 88, 208, 0.15)',
-                            }
-                          }}
-                        >
-                          <CardContent>
-                            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                              {project.Project_name}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                              {project.Project_descrp}
-                            </Typography>
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                              {project.Skills.map((skill, index) => (
-                                <Box
-                                  key={index}
-                                  sx={{
-                                    px: 2,
-                                    py: 0.5,
-                                    borderRadius: '12px',
-                                    fontSize: '0.8rem',
-                                    background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
-                                    color: '#fff',
-                                  }}
-                                >
-                                  {skill}
-                                </Box>
-                              ))}
-                            </Box>
-                          </CardContent>
-                        </Card>
-                      </Fade>
-                    </Grid>
-                  );
-                })
-              ) : (
-                <Grid item xs={12}>
-                  <Paper sx={{
-                    p: 3,
-                    textAlign: 'center',
-                    borderRadius: '16px',
-                    background: 'rgba(255, 255, 255, 0.9)',
-                    backdropFilter: 'blur(10px)',
-                  }}>
-                    <Typography variant="body1" sx={{ color: '#666' }}>
-                      No projects available.
-                    </Typography>
-                  </Paper>
-                </Grid>
-              )}
-            </Grid>
-          </Grid>
+              {/* <div className="education-item">
+                <FaCode className="quick-info-icon" />
+                <div className="education-details">
+                  <span className="major">Major: Mechanical Engineering</span>
+                </div>
+              </div> */}
 
-          <Grid item xs={12}>
-            <Typography variant="h5" sx={{ 
-              mb: 2,
-              fontWeight: 600,
-              color: '#1a237e'
-            }}>
-              Friends List
-            </Typography>
-            <Paper sx={{
-              p: 3,
-              borderRadius: '16px',
-              background: 'rgba(255, 255, 255, 0.9)',
-              backdropFilter: 'blur(10px)',
-            }}>
-              <Grid container spacing={2}>
-                {userData.Friend && userData.Friend.length > 0 ? (
-                  userData.Friend.map((friend, index) => (
-                    <Grid item xs={12} sm={6} md={4} key={index}>
-                      <Card sx={{
-                        borderRadius: '12px',
-                        background: 'rgba(255, 255, 255, 0.9)',
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          transform: 'translateY(-3px)',
-                          boxShadow: '0 8px 16px rgba(65, 88, 208, 0.15)',
-                        }
-                      }}>
-                        <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          <Avatar sx={{ 
-                            background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)',
-                          }}>
-                            {friend[0]}
-                          </Avatar>
-                          <Typography>{friend}</Typography>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  ))
-                ) : (
-                  <Grid item xs={12}>
-                    <Typography sx={{ textAlign: 'center', color: '#666' }}>
-                      No friends added yet.
-                    </Typography>
-                  </Grid>
-                )}
-              </Grid>
-            </Paper>
-          </Grid>
-        </Grid>
-      </Container>
-    </Box>
-  );
+              {/* <div className="education-item">
+                <FaBookReader className="quick-info-icon" />
+                <div className="education-details">
+                  <span className="minor">Minor: Software Engineering</span>
+                </div>
+              </div> */}
+            </div>
+
+            {/* <a href={CV} target='_blank' className="download-cv">
+              <FaDownload /> Download CV
+            </a> */}
+          </div>
+        </div>
+
+        <div className="info-right">
+          <div className="info-header animate">
+            <h2 className="info-name">{userData.data.user_id}</h2>
+            {/* <p className="info-title">Full Stack Developer</p> */}
+          </div>
+          
+          <div className="info-details animate">
+            <div className="contact-grid">
+              
+              
+              <div className="info-item">
+                <a href="mailto:pranupranjal850@gmail.com" className="contact-link">
+                  <div className="icon-box">
+                    <FaEnvelope className="contact-icon" />
+                  </div>
+                  <div className="contact-info">
+                    <span className="contact-label">Email</span>
+                    <span className="contact-value">{userData.data.Email}</span>
+                  </div>
+                </a>
+              </div>
+              
+              <div className="info-item">
+                <a href="https://github.com/PranuPranjal" target="_blank" rel="noopener noreferrer" className="contact-link">
+                  <div className="icon-box">
+                    <FaGithub className="contact-icon" />
+                  </div>
+                  <div className="contact-info">
+                    <span className="contact-label">GitHub</span>
+                    <span className="contact-value">{userData.data.github}</span>
+                  </div>
+                </a>
+              </div>
+              
+              <div className="info-item">
+                <a href="https://www.linkedin.com/in/pranu-pranjal-646505264/" target="_blank" rel="noopener noreferrer" className="contact-link">
+                  <div className="icon-box">
+                    <FaLinkedin className="contact-icon" />
+                  </div>
+                  <div className="contact-info">
+                    <span className="contact-label">LinkedIn</span>
+                    <span className="contact-value">{userData.data.Linkedin}</span>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="info-bio animate">
+            <h3>About Me</h3>
+            <p>
+            {/* {userData.about} */}
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="skills" className="skills-section">
+      <div className="skills-container">
+        <h2 className="skills-title">My Skills</h2>
+        <p className="skills-subtitle">Technologies I work with</p>
+        
+        <div className="skills-grid">
+        <div className="skill-category">
+          <div className="skills-list">
+            {userData.data.Skills.map((skill, skillIndex) => (
+              <div key={skillIndex} className="skill-item">
+                <span className="skill-name">{skill}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        </div>
+          
+        
+      </div>
+    </section>
+
+    {/* Projects */}
+    <section id="projects" className="projects-section">
+      <div className="projects-container">
+      <h2 className="projects-title">Featured Projects</h2>
+
+      <div className="projects-grid">
+        {userData.data.Projects && userData.data.Projects.length > 0 ? (
+          userData.data.Projects.map((projectId) => {
+            const project = userData.projects.find((proj) => proj._id === projectId);
+            return (
+              <div 
+            key={projectId} 
+            className="project-card"
+            style={{ animationDelay: `${projectId * 0.2}s` }}
+            variant="contained" onClick={() => navigate('/viewproject', { state: { id: user , pid: pid, ori_id: ori_id} })}
+          >
+            <div className="project-image-container">
+              <img 
+                src='#'
+                alt={project.Project_name} 
+                className="project-image"
+              />
+              <div className="project-links">
+                <a 
+                  href={project.Project_URL} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="project-link"
+                >
+                  <FaGithub /> Code
+                </a>
+                {/* <a 
+                  href={project.links.live} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="project-link"
+                >
+                  <FaExternalLinkAlt /> Live Demo
+                </a> */}
+              </div>
+            </div>
+
+            <div className="project-content">
+              <h3 className="project-title">{project.Project_name}</h3>
+              <p className="project-description">{project.Project_descrp}</p>
+              
+              <div className="project-tech">
+                <h4 className="tech-title">Technologies Used:</h4>
+                <div className="tech-list">
+                  {project.Skills.map((tech, techIndex) => (
+                    <div key={techIndex} className="tech-item">
+                      {/* {tech.icon} */}
+                      <span>{tech}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+            </div>
+          </div>
+          );
+        })
+        ) : (
+          <Typography>No projects available.</Typography>
+        )}
+      </div>
+      </div>
+    </section>
+
+    
+  </Container>
+);
 };
 
 export default UserProfile;
