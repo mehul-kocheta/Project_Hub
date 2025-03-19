@@ -1,38 +1,67 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
-import './Navbar.css'; // Add a CSS file for custom styling
+import React, { useState } from 'react';
+import { 
+  FaHome, FaUser, FaCode, FaBriefcase, 
+  FaEnvelope 
+} from 'react-icons/fa';
+import { TbLogout } from "react-icons/tb";
+import { RiMenu3Line, RiCloseLine } from 'react-icons/ri';
+import { useLocation, useNavigate } from 'react-router-dom';
+import '../App.css';
 
-function Navbar() {
-  const navigate = useNavigate();
+const Navbar = ({ user, pass }) => {
+  const location = useLocation(); // Detects the current route
+  const navigate = useNavigate();  // For programmatic navigation
+
+  const id = location.state?.id;   // Pass user ID
+  const pwd = location.state?.pass; 
+
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const routes = [
+    { path: '/dashboard', name: 'Dashboard', icon: <FaHome /> },
+    { path: '/myprofile', name: 'Profile', icon: <FaUser /> },
+    { path: '/project', name: 'Projects', icon: <FaBriefcase /> },
+    { path: '/contact', name: 'Contact', icon: <FaEnvelope /> },
+    
+  ];
+
   return (
-    <AppBar position="static">
-      <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          Project Hub
-        </Typography>
-        
-        {/* User Avatar and Dropdown */}
-        <div className="navbar-user">
-          <img
-            src="https://via.placeholder.com/40"
-            alt="User Avatar"
-            className="user-avatar"
-          />
-          <div className="user-dropdown">
-            <span className="dropdown-title">Account</span>
-            <ul className="dropdown-menu">
-              <li><button variant="contained" onClick={() => navigate('/profile')} >My Profile</button></li>
-              <li><a href="#settings">Settings</a></li>
-              {/* Logout button linking to Sign In page */}
-              <li><Link to="/signin">Logout</Link></li>
-              <li><Link to="/removeaccount">Delete Account</Link></li>
-            </ul>
-          </div>
+    <nav className="navbar">
+      <div className="navbar-container">
+        <div className="navbar-logo">
+          <a href="/dashboard">PROJECT HUB</a>
         </div>
-      </Toolbar>
-    </AppBar>
+
+        <div className="navbar-mobile-toggle" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+          {isMobileMenuOpen ? <RiCloseLine /> : <RiMenu3Line />}
+        </div>
+
+        <ul className={`navbar-links ${isMobileMenuOpen ? 'active' : ''}`}>
+          {routes.map((route) => (
+            <li key={route.path}>
+              <a
+                href={route.path}
+                className={location.pathname === route.path ? 'active' : ''} 
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(route.path, { state: { id: id, pass: pwd } }); 
+                }}
+              >
+                {route.icon} {route.name}
+              </a>
+              
+            </li>
+            
+          ))}
+          <li>
+          <a href='/signIn'>
+          <TbLogout /> Logout
+          </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
   );
-}
+};
 
 export default Navbar;

@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Paper, Button } from '@mui/material';
+import { FaUserFriends, FaClipboardList, FaClock, FaCheckCircle, FaRocket, FaPaperPlane, FaCode, FaDatabase, FaPaintBrush } from 'react-icons/fa';
 import { useLocation } from 'react-router-dom';
 import '../App.css';
 
 const Viewproject = () => {
     const location = useLocation();
-    const pid = location.state?.pid;
+    const pid = location.state?.id;
     const ori_id = location.state?.ori_id;
+    console.log(ori_id);
+
 
     const [project, setProject] = useState(null);
     const [loading, setLoading] = useState(true); // Track loading state
@@ -93,17 +96,26 @@ const Viewproject = () => {
     }
 
     return (
-        <Box sx={{ padding: '16px' }}>
-            <Paper elevation={3} sx={{ padding: '16px' }}>
-                <Typography variant="h4" gutterBottom>{project.Project_name}</Typography>
-                <Typography variant="body1" gutterBottom><strong>Description:</strong> {project.Project_descrp || 'No description available'}</Typography>
-                <Typography variant="body1" gutterBottom><strong>Author:</strong> {project.Project_author || 'Unknown'}</Typography>
-                <Typography variant="body1" gutterBottom>
-                    <strong>Contributors:</strong> {project.Contributors && project.Contributors.length > 0 ? project.Contributors.join(', ') : 'No contributors'}
-                </Typography>
-                <Typography variant="body1" gutterBottom>
-                    <strong>Skills:</strong> {project.Skills && project.Skills.length > 0 ? project.Skills.join(', ') : 'No skills listed'}
-                </Typography>
+        <div className="project-dash-container" style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
+            <div className="project-dash">
+                <div className="project-header">
+                    <h1 className="project-title"><FaRocket />{project.Project_name}</h1>
+                    <p className="project-description"> {project.Project_descrp || 'No description available'}</p>
+                </div>
+                <div className="collaborators">
+                    <h2><FaUserFriends /> Collaborators</h2>
+                    <div className="collaborator-list"></div>
+                    <Typography variant="body1" gutterBottom><strong>Author:</strong> {project.Project_author || 'Unknown'}</Typography>
+                    <Typography variant="body1" gutterBottom>
+                        <strong>Contributors:</strong> {project.Contributors && project.Contributors.length > 0 ? project.Contributors.join(', ') : 'No contributors'}
+                    </Typography>
+                </div>
+                <div className="skills">
+                    <h2><FaClipboardList /> Skills</h2>
+                    <div className="skills-list">
+                        <strong>Skills:</strong> {project.Skills && project.Skills.length > 0 ? project.Skills.join(', ') : 'No skills listed'}
+                    </div>
+                </div>
 
                 {project.Project_URL && (
                     <Typography variant="body1" gutterBottom>
@@ -121,6 +133,7 @@ const Viewproject = () => {
                 {/* Collaboration Request Button */}
                 <Box sx={{ marginTop: '16px' }}>
                     <Button
+                        className='collab-button'
                         variant="contained"
                         onClick={handleCollabRequest}
                         disabled={collabRequestStatus === 'loading'}
@@ -130,8 +143,8 @@ const Viewproject = () => {
                     {collabRequestStatus === 'success' && <Typography color="success">Request sent successfully!</Typography>}
                     {collabRequestStatus === 'error' && <Typography color="error">Failed to send request. Please try again.</Typography>}
                 </Box>
-            </Paper>
-        </Box>
+            </div>
+        </div>
     );
 };
 

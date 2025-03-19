@@ -1,169 +1,296 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { FaUser, FaEnvelope, FaLock, FaUserPlus, FaPhone, FaLinkedin, FaGithub, FaGraduationCap, FaCode, FaFileUpload, FaSignInAlt } from 'react-icons/fa'; 
 import { useNavigate, Link } from 'react-router-dom';
+import { TextField, Autocomplete, Chip, Box, Typography } from '@mui/material';
 import axios from 'axios';
-import { TextField, Button, Typography, Box, Container } from '@mui/material';
+import '../App.css'; 
 
-const SignUp = () => {
-  const [formData, setFormData] = useState({
-    id: '',
-    email: '',
-    mobile: '',
-    pwd: ''
-  });
-  const [message, setMessage] = useState('');
+function Signup() {
+    const [formData, setFormData] = useState({
+        id: '',
+        email: '',
+        phone: '',
+        pwd: '',
+        Linkedin: '',
+        github: '',
+        college_name: '',
+        degree: '',
+        skills: [],
+        about: ''
+      });
+      const [inputSkill, setInputSkill] = useState('');
+      const [availableSkills, setAvailableSkills] = useState([]);
+      useEffect(() => {
+        fetch("/api/get_skills", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                skills: "Python"
+            })
+        })
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+            return response.json();
+        })
+        .then((data) => {
+            if (Array.isArray(data.skills)) {
+                // Extract only the first element (skill name) from each array
+                const skillNames = data.skills.map(skill => skill[0]);
+                setAvailableSkills(skillNames);
+            } else {
+                console.error("Unexpected response format:", data.skills);
+                setAvailableSkills([]);
+            }
+        })
+        .catch((error) => console.error("Fetch error:", error));
+    }, []);
+    
+      const [message, setMessage] = useState('');
+      const [ confirmPassword, setConfirmPassword ] = useState('');
+    
+      const navigate = useNavigate();
+    
+      const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+      };
 
-  const navigate = useNavigate();
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        // if (!username || !email || !password || !confirmPassword || !phone || !linkedin || !github || !skills || !college || !degree || !resume) {
+        //     setMessage("All fields are required!");
+        //     return;
+        // }
+        if (formData.pwd !== confirmPassword) {
+            setMessage("Passwords do not match!");
+        } else {
+            setMessage("");
+            try {
+                const response = await axios.put('/api/register', formData);
+                setMessage(response.data.message);
+                console.log(response.data.message);
+                navigate('/signin'); // Navigate to the sign-in page after successful sign-up
+              } catch (error) {
+                setMessage('Error: ' + error.response?.data?.message || 'An error occurred');
+              }
+            // console.log("Form submitted:", { username, email, password, phone, linkedin, github, skills, college, degree, resume });
+        }
+    };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
+    return (
+        <div className="signup-container animate">
+            <h1 className="signup-title">Join Us Today!</h1>
+            <form className="signup-form" onSubmit={handleSubmit}>
+                    <div className="form-group">
+                        <label className="input-label">
+                            <FaUser className="input-icon" />
+                            <input
+                                type="text"
+                                placeholder="Username"
+                                className="signup-input"
+                                name='id'
+                                value={formData.id}
+                                onChange={handleChange}
+                                required
+                            />
+                        </label>
+                    </div>
+                    <div className="form-group">
+                        <label className="input-label">
+                            <FaEnvelope className="input-icon" />
+                            <input
+                                type="email"
+                                placeholder="Email"
+                                className="signup-input"
+                                name='email'
+                                value={formData.email}
+                                onChange={handleChange}
+                                required
+                            />
+                        </label>
+                    </div>
+                    <div className="form-group">
+                        <label className="input-label">
+                            <FaLock className="input-icon" />
+                            <input
+                                type="password"
+                                placeholder="Password"
+                                className="signup-input"
+                                name='pwd'
+                                value={formData.pwd}
+                                onChange={handleChange}
+                                required
+                            />
+                        </label>
+                    </div>
+                    <div className="form-group">
+                        <label className="input-label">
+                            <FaLock className="input-icon" />
+                            <input
+                                type="password"
+                                placeholder="Confirm Password"
+                                className="signup-input"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                required
+                            />
+                        </label>
+                    </div>
+                    <div className="form-group">
+                        <label className="input-label">
+                            <FaPhone className="input-icon" />
+                            <input
+                                type="tel"
+                                placeholder="Phone Number"
+                                className="signup-input"
+                                name='phone'
+                                value={formData.phone}
+                                onChange={handleChange}
+                                required
+                            />
+                        </label>
+                    </div>
+                    <div className="form-group">
+                        <label className="input-label">
+                            <FaLinkedin className="input-icon" />
+                            <input
+                                type="url"
+                                placeholder="LinkedIn Profile"
+                                className="signup-input"
+                                name='Linkedin'
+                                value={formData.Linkedin}
+                                onChange={handleChange}
+                                required
+                            />
+                        </label>
+                    </div>
+                    <div className="form-group">
+                        <label className="input-label">
+                            <FaGithub className="input-icon" />
+                            <input
+                                type="url"
+                                placeholder="GitHub Profile"
+                                className="signup-input"
+                                name='github'
+                                value={formData.github}
+                                onChange={handleChange}
+                                required
+                            />
+                        </label>
+                    </div>
+                    <div className="form-group">
+                        <label className="input-label">
+                            <FaGraduationCap className="input-icon" />
+                            <input
+                                type="text"
+                                placeholder="College"
+                                className="signup-input"
+                                name='college_name'
+                                value={formData.college_name}
+                                onChange={handleChange}
+                                required
+                            />
+                        </label>
+                    </div>
+                    <div className="form-group">
+                        <label className="input-label">
+                            <FaGraduationCap className="input-icon" />
+                            <input
+                                type="text"
+                                placeholder="Degree"
+                                className="signup-input"
+                                name='degree'
+                                value={formData.degree}
+                                onChange={handleChange}
+                                required
+                            />
+                        </label>
+                    </div>
+                    <div className="form-group">
+                        <label className="input-label">
+                            <FaUser className="input-icon" />
+                            <input
+                                type="text"
+                                placeholder="About"
+                                className="signup-input"
+                                name='about'
+                                value={formData.about}
+                                onChange={handleChange}
+                                required
+                            />
+                        </label>
+                    </div>
+                    <div className="form-group">
+                        <label className="input-label">
+                            <FaCode className="input-icon" />
+                            <Autocomplete
+                                multiple
+                                freeSolo
+                                options={availableSkills} // Pass the list of skill names
+                                value={formData.skills}
+                                onChange={(event, newValue) => {
+                                    setFormData({ ...formData, skills: newValue });
+                                }}
+                                inputValue={inputSkill}
+                                onInputChange={(event, newInputValue) => {
+                                    setInputSkill(newInputValue);
+                                }}
+                                renderTags={(value, getTagProps) =>
+                                    value.map((option, index) => (
+                                        <Chip style={{color: 'white'}}
+                                            variant="outlined"
+                                            label={option}
+                                            {...getTagProps({ index })}
+                                            key={index}
+                                        />
+                                    ))
+                                }
+                                renderInput={(params) => (
+                                    <TextField style={{width: '300px', color: 'white'}}
+                                        {...params}
+                                        variant="outlined"
+                                        className='signup-input'
+                                        placeholder='Your Skills'
+                                        fullWidth
+                                    />
+                                )}
+                            />
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.put('/api/register', formData);
-      setMessage(response.data.message);
-      console.log(response.data.message);
-      navigate('/signin'); // Navigate to the sign-in page after successful sign-up
-    } catch (error) {
-      setMessage('Error: ' + error.response?.data?.message || 'An error occurred');
-    }
-  };
-
-  return (
-    <Container maxWidth="xs">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          backgroundColor: '#1e1e2e',
-          borderRadius: '8px',
-          padding: '20px',
-          boxShadow: '0px 0px 15px rgba(0, 0, 0, 0.2)',
-        }}
-      >
-        <Typography component="h1" variant="h5" color="#ffffff">
-          Sign Up
-        </Typography>
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="name"
-            label="Name"
-            name="id"
-            autoComplete="name"
-            autoFocus
-            value={formData.id}
-            onChange={handleChange}
-            sx={{
-              backgroundColor: '#ffffff',
-              borderRadius: '5px',
-              '& .MuiInputBase-root': {
-                color: '#333', // Darker text for better visibility
-              },
-              marginBottom: '16px', // Adjusting space between fields
-            }}
-          />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="email"
-            label="Email Address"
-            name="email"
-            autoComplete="email"
-            value={formData.email}
-            onChange={handleChange}
-            sx={{
-              backgroundColor: '#ffffff',
-              borderRadius: '5px',
-              '& .MuiInputBase-root': {
-                color: '#333',
-              },
-              marginBottom: '16px',
-            }}
-          />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="phone"
-            label="Phone Number"
-            name="mobile"
-            autoComplete="phone"
-            value={formData.mobile}
-            onChange={handleChange}
-            sx={{
-              backgroundColor: '#ffffff',
-              borderRadius: '5px',
-              '& .MuiInputBase-root': {
-                color: '#333',
-              },
-              marginBottom: '16px',
-            }}
-          />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            name="pwd"
-            label="Password"
-            type="password"
-            id="password"
-            autoComplete="current-password"
-            value={formData.pwd}
-            onChange={handleChange}
-            sx={{
-              backgroundColor: '#ffffff',
-              borderRadius: '5px',
-              '& .MuiInputBase-root': {
-                color: '#333',
-              },
-              marginBottom: '16px',
-            }}
-          />
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{
-              mt: 3,
-              mb: 2,
-              backgroundColor: '#007bff',
-              '&:hover': {
-                backgroundColor: '#0056b3',
-              },
-              color: '#fff',
-              padding: '10px',
-              borderRadius: '5px',
-            }}
-          >
-            Sign Up
-          </Button>
-        </Box>
-
-        <Box sx={{ marginTop: 2, width: '100%' }}>
+                        </label>
+                    </div>
+                    {/* <div className="form-group">
+                        <label className="input-label">
+                            <FaFileUpload className="input-icon" />
+                            <input
+                                type="file"
+                                className="signup-input file-input"
+                                onChange={(e) => setResume(e.target.files[0])}
+                            
+                            />
+                            <span className="input-label-text">Upload Resume</span>
+                        </label>
+                    </div> */}
+         <Box sx={{ marginTop: 2, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <Typography variant="body2" color="#ffffff">
             Already have an account?{' '}
             <Link to="/signin" style={{ textDecoration: 'none', color: '#1976d2' }}>
-              Sign In
+              Sign In <FaSignInAlt />
             </Link>
           </Typography>
         </Box>
+        <br></br>
+                {/* {resume && <p className="file-name">Selected File: {resume.name}</p>} */}
+                {message && <p className="error-message">{message}</p>}
+                <button type="submit" className="submit-button">
+                    <FaUserPlus className="button-icon" /> Sign Up
+                </button>
+            </form>
+        </div>
+    );
+}
 
-        {message && (
-          <Typography color="error" sx={{ marginTop: 2, width: '100%' }}>
-            {message}
-          </Typography>
-        )}
-      </Box>
-    </Container>
-  );
-};
-
-export default SignUp;
+export default Signup;
