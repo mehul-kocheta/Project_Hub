@@ -1,1 +1,8 @@
+<<<<<<< HEAD
 /client/node_modules
+=======
+/repo_test
+/__pycache__
+/backend/__pycache__/github_intigration.cpython-311.pyc
+/backend/__pycache__/groq_test.cpython-311.pyc
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5

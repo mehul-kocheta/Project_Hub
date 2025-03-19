@@ -6,7 +6,10 @@ import { FaGithub, FaLinkedin, FaEnvelope, FaPhone,
   FaUniversity, FaCode, FaBookReader, FaEdit } from 'react-icons/fa';
 import axios from 'axios';
 import Navbar from './Navbar';
+<<<<<<< HEAD
 import proimg from '../assets/ProjectHub.jpg';
+=======
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
 
 const MyProfile = () => {
   const location = useLocation();
@@ -218,7 +221,11 @@ const MyProfile = () => {
           >
             <div className="project-image-container">
               <img 
+<<<<<<< HEAD
                 src={proimg}
+=======
+                src='#'
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
                 alt={project.Project_name} 
                 className="project-image"
               />
@@ -308,7 +315,11 @@ const MyProfile = () => {
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                           
                           <Box >
+<<<<<<< HEAD
                           Project Id: {pid = userData.requests[index]._id }
+=======
+                          {pid = userData.requests[index]._id }
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
                           {/* {setpid(userData.requests[index]._id)} */}
                             <Typography variant="h6" sx={{ fontWeight: 500 }}>
                               {console.log(pid)}

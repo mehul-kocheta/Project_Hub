@@ -4,7 +4,10 @@ import { Box, Typography, Checkbox, FormControlLabel, LinearProgress, Button, Te
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FaComment, FaComments, FaProjectDiagram, FaGithub, FaUser, FaMeetup, FaCamera, FaTimes } from 'react-icons/fa';
 import { RiUserAddLine } from "react-icons/ri";
+<<<<<<< HEAD
 import { FaRegClock } from 'react-icons/fa';
+=======
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
 import { SiChatbot } from "react-icons/si";
 import { MdOutlineAddTask } from "react-icons/md";
 import { MdDateRange } from "react-icons/md";
@@ -114,9 +117,15 @@ const Projects = () => {
       .then((response) => response.json())
       .then((data) => {
         if (data && data.project.Requests) {
+<<<<<<< HEAD
           console.log(data.project.Deadline);
           setPendingRequests(data.project.Requests);
           setDeadline(data.project.Deadline);
+=======
+          console.log(data.project);
+          setPendingRequests(data.project.Requests);
+          setDeadline(data.prject.Deadline);
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
         }
       })
       .catch((error) => console.error("Fetch error:", error));
@@ -172,7 +181,11 @@ const Projects = () => {
           contributor_name: name,
         });
         if (response.data) {
+<<<<<<< HEAD
           setCollaborators([...collaborators, name+': Requested']);
+=======
+          // setCollaborators([...collaborators, name]);
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
           setNewCollaborator('');
         }
       } catch (error) {
@@ -192,7 +205,10 @@ const Projects = () => {
       });
       // Remove accepted user from pending requests
       setPendingRequests(pendingRequests.filter((request) => request.id !== user.id));
+<<<<<<< HEAD
       window.location.reload();
+=======
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
       // Optionally, you can also add them to collaborators
       setCollaborators([...collaborators, user.name]); 
     } catch (error) {
@@ -320,12 +336,47 @@ const Projects = () => {
                     }
                   }}
                 >
+<<<<<<< HEAD
                   <RiUserAddLine size={24} />Add Collaborator
+=======
+                  <RiUserAddLine />Add Collaborator
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
                 </Button>
               </Box>
             </Paper>
           </Grid>
 
+<<<<<<< HEAD
+=======
+          <Grid>
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ 
+              padding: '25px',
+              borderRadius: '20px',
+              background: 'linear-gradient(to bottom, #1e293b, #0f172a)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+              transition: 'transform 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-5px)',
+              }
+            }}>
+              <Typography variant="h6" sx={{ 
+                display: 'flex',
+                alignItems: 'center',
+                color: '#4158D0',
+                fontWeight: 600,
+                mb: 3
+              }}>
+                Deadline
+              </Typography>
+              <Typography><FaTimes size={24}/> {deadline}</Typography>
+            </Paper>
+            </Grid>
+          </Grid>
+
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
           <Grid item xs={12} md={6}>
             <Paper sx={{ 
               padding: '25px',
@@ -349,8 +400,11 @@ const Projects = () => {
               }}>
                 Tasks
               </Typography>
+<<<<<<< HEAD
               <Typography variant="subtitle1" sx={{ mb: 1, color: 'red' }}><FaRegClock /> {deadline}</Typography>
               
+=======
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
 
               <Box sx={{ mb: 3 }}>
                 <Typography variant="subtitle1" sx={{ mb: 1 }}>Progress</Typography>
@@ -445,7 +499,11 @@ const Projects = () => {
                     }
                   }}
                 >
+<<<<<<< HEAD
                   <MdOutlineAddTask size={24} /> Add Task
+=======
+                  <MdOutlineAddTask /> Add Task
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
                 </Button>
               </Box>
             </Paper>
@@ -486,7 +544,11 @@ const Projects = () => {
                       }}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+<<<<<<< HEAD
                         <Typography variant="h6" sx={{ fontWeight: 500,color: 'white' }}>
+=======
+                        <Typography variant="h6" sx={{ fontWeight: 500 }}>
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
                           {request}
                         </Typography>
                       </Box>
@@ -669,7 +731,11 @@ const Projects = () => {
         </Button>
       </Box>
       <Box sx={{ position: 'fixed', bottom: 160, right: 30 }}>
+<<<<<<< HEAD
         <a href='https://mail.google.com' target='_blank'><Button
+=======
+        <a href='www.gmail.com'><Button
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
           variant="contained"
           onClick={handleMeet}
           onMouseEnter={() => setIsHoveredMeet(true)}

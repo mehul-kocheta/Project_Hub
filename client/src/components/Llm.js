@@ -32,10 +32,17 @@ const LLMChat = (pid) => {
   return (
     <Box sx={{ padding: 2, background: 'linear-gradient(to bottom, #1e293b, #0f172a)', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
       <Typography variant="h5" sx={{ marginBottom: 2, fontWeight: 'bold', background: 'linear-gradient(135deg, #4158D0 0%, #C850C0 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+<<<<<<< HEAD
         Fixie !
       </Typography>
 
       <Box sx={{ marginBottom: 2, padding: 2, color: 'white', backgroundColor: 'rgba(15, 23, 42, 0.9)', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', height: '400px', overflowY: 'auto' }}>
+=======
+        Ask Fixie !
+      </Typography>
+
+      <Box sx={{ marginBottom: 2, padding: 2, color: 'white', backgroundColor: 'rgba(15, 23, 42, 0.9)', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', height: '200px', overflowY: 'auto' }}>
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
         <Typography variant="body1" sx={{ color: 'color' }}>
           <span dangerouslySetInnerHTML={{ __html: responseMessage.replace(/\n/g, '<br />') }} />
         </Typography>

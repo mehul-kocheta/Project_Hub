@@ -1,6 +1,10 @@
 {
   "name": "client",
+<<<<<<< HEAD
   "proxy": "http://192.168.14.219:5000",
+=======
+  "proxy": "#",
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
   "version": "0.1.0",
   "private": true,
   "dependencies": {

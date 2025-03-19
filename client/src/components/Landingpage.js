@@ -3,11 +3,17 @@ import { motion } from 'framer-motion';
 import { TypeAnimation } from 'react-type-animation';
 import { FaUserPlus, FaReact } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+<<<<<<< HEAD
 import { HiMiniArrowRightStartOnRectangle } from "react-icons/hi2";
 import '../App';
 import Features from './Features';
 import Contact from './contact';
 import icon from '../assets/logokri.jpg';
+=======
+import '../App';
+import Features from './Features';
+import Reachout from './Reachout';
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
 
 function LandingPage() {
   const navigate = useNavigate();
@@ -117,9 +123,13 @@ function LandingPage() {
               className="submit-button"
               onClick={() => navigate('/signin')}
             >
+<<<<<<< HEAD
               {/* <FaUserPlus className="button-icon" /> Get Started */}
               {/* <img src={icon} ></img> */}
               <HiMiniArrowRightStartOnRectangle className="button-icon" /> Get Started
+=======
+              <FaUserPlus className="button-icon" /> Get Started
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
             </button>
           </div>
         </div>
@@ -144,7 +154,11 @@ function LandingPage() {
         variants={fadeRotate}
         style={{ margin: '10px 0', willChange: 'opacity, transform' }}
       >
+<<<<<<< HEAD
         <Contact />
+=======
+        <Reachout />
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
       </motion.section>
     </div>
   );

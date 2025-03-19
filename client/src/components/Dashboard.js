@@ -51,7 +51,11 @@ const Dashboard = () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+<<<<<<< HEAD
         skills: userSkills,
+=======
+        substring: userSkills[0],
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
       })
     })
       .then((response) => {
@@ -134,7 +138,11 @@ const Dashboard = () => {
                   onClick={() => navigate('/viewproject', { state: { id: project._id, ori_id: user }})}
                   key={index}
                   className='project-card'
+<<<<<<< HEAD
                   style={{ width: '100%', maxWidth: '600px', margin: '10px 0' }}
+=======
+                  style={{ width: '100%', maxWidth: '600px', height: '400px', margin: '10px 0' }}
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
                 >
                   <div className="project-image-container" style={{ height: '40%' }}>
                     <img 

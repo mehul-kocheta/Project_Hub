@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Typography, Avatar, Grid, Card, CardContent, List, ListItem, ListItemAvatar, ListItemText, Box } from '@mui/material';
+<<<<<<< HEAD
+=======
+import { Email, Phone } from '@mui/icons-material';
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FaGithub, FaLinkedin, FaEnvelope, FaPhone, 
   FaMapMarkerAlt, FaDownload, FaUserGraduate, FaEye,
   FaUniversity, FaCode, FaBookReader } from 'react-icons/fa';
+<<<<<<< HEAD
 import proimg from '../assets/ProjectHub.jpg';
+=======
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
 import '../App.css';
 import Navbar from './Navbar';
 
@@ -210,11 +217,19 @@ const UserProfile = () => {
             key={projectId} 
             className="project-card"
             style={{ animationDelay: `${projectId * 0.2}s` }}
+<<<<<<< HEAD
             variant="contained" onClick={() => navigate('/viewproject', { state: { id: project._id, ori_id: ori_id} })}
           >
             <div className="project-image-container">
               <img 
                 src={proimg}
+=======
+            variant="contained" onClick={() => navigate('/viewproject', { state: { id: user , pid: pid, ori_id: ori_id} })}
+          >
+            <div className="project-image-container">
+              <img 
+                src='#'
+>>>>>>> a243281fec0e7a09b6c4beeace2ac621f45d0cc5
                 alt={project.Project_name} 
                 className="project-image"
               />
